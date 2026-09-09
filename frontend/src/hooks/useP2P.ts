@@ -22,7 +22,9 @@ function getWebSocketUrl(roomCode?: string): string {
     } else if (base.startsWith('http://')) {
       base = 'ws://' + base.slice(7);
     }
-    // If user provided wss://backend.railway.app without /ws/p2p
+    // If user copied API URL containing /api or /api/, strip it
+    base = base.replace(/\/api\/?$/, '');
+    // If user provided host without /ws/p2p
     if (!base.includes('/ws/p2p')) {
       base = `${base}/ws/p2p`;
     }

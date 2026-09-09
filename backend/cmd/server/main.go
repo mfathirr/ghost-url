@@ -58,6 +58,7 @@ func main() {
 		api.POST("/links", linkHandler.CreateLink)
 		api.GET("/links/:slug", linkHandler.GetLinkMetadata)
 		api.POST("/links/:slug/unlock", linkHandler.UnlockLink)
+		api.GET("/ws/p2p", p2pHandler.ServeWS)
 	}
 
 	// Short redirect route
