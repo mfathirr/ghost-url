@@ -30,7 +30,7 @@ type LinkMetadataResponse struct {
 
 // UnlockRequest defines the payload to unlock a passcode-protected link.
 type UnlockRequest struct {
-	Passcode string `json:"passcode" binding:"required"`
+	Passcode string `json:"passcode"`
 }
 
 // UnlockResponse returns the original URL once verified.
