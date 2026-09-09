@@ -73,6 +73,14 @@ export interface TransferPayload {
   transferId?: string;
 }
 
+export interface CompletedDownload {
+  url: string;
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  blob?: Blob;
+}
+
 export interface IncomingTransfer {
   senderId: string;
   senderName: string;
@@ -80,6 +88,8 @@ export interface IncomingTransfer {
   content: string;
   receivedAt: number;
   fileOffer?: FileOfferPayload;
+  completedDownload?: CompletedDownload;
 }
 
 export type WSStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
+

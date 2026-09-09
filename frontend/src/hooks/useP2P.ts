@@ -67,7 +67,44 @@ function getWebSocketUrl(roomCode?: string): string {
   return base;
 }
 
+export function inferMimeType(fileName: string, mimeType?: string): string {
+  if (mimeType && mimeType !== 'application/octet-stream' && mimeType.trim() !== '') {
+    return mimeType;
+  }
+  const lower = (fileName || '').toLowerCase();
+  if (lower.endsWith('.mov')) return 'video/quicktime';
+  if (lower.endsWith('.mp4')) return 'video/mp4';
+  if (lower.endsWith('.m4v')) return 'video/x-m4v';
+  if (lower.endsWith('.webm')) return 'video/webm';
+  if (lower.endsWith('.mkv')) return 'video/x-matroska';
+  if (lower.endsWith('.avi')) return 'video/x-msvideo';
+  if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
+  if (lower.endsWith('.png')) return 'image/png';
+  if (lower.endsWith('.gif')) return 'image/gif';
+  if (lower.endsWith('.webp')) return 'image/webp';
+  if (lower.endsWith('.svg')) return 'image/svg+xml';
+  if (lower.endsWith('.pdf')) return 'application/pdf';
+  if (lower.endsWith('.mp3')) return 'audio/mpeg';
+  if (lower.endsWith('.m4a')) return 'audio/mp4';
+  if (lower.endsWith('.wav')) return 'audio/wav';
+  if (lower.endsWith('.zip')) return 'application/zip';
+  return mimeType || 'application/octet-stream';
+}
+
+interface ReceivingSession {
+  transferId: string;
+  currentBatch: ArrayBuffer[];
+  blobParts: Blob[];
+  receivedChunks: number;
+  totalChunks: number;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  senderName: string;
+}
+
 export function useP2P(initialRoomCode = '') {
+
   const [roomCode, setRoomCode] = useState<string>(() => {
     if (initialRoomCode) return initialRoomCode;
     if (typeof window !== 'undefined') {
@@ -104,21 +141,8 @@ export function useP2P(initialRoomCode = '') {
   const pendingFileSends = useRef<
     Map<string, { file: File; peerId: string; resolve: (val: boolean) => void }>
   >(new Map());
-  const receivingTransferByPeer = useRef<
-    Map<
-      string,
-      {
-        transferId: string;
-        chunks: ArrayBuffer[];
-        receivedChunks: number;
-        totalChunks: number;
-        fileName: string;
-        fileType: string;
-        fileSize: number;
-        senderName: string;
-      }
-    >
-  >(new Map());
+  const receivingTransferByPeer = useRef<Map<string, ReceivingSession>>(new Map());
+
 
   useEffect(() => {
     selfInfoRef.current = selfInfo;
@@ -329,6 +353,68 @@ export function useP2P(initialRoomCode = '') {
   const drainCandidatesRef = useRef<(peerId: string, pc: RTCPeerConnection) => Promise<void>>(null!);
   const sendSignalRef = useRef<(msg: SignalMessage) => void>(null!);
 
+  // Finalize receiving: converts batches to a single Blob, cleans memory, and handles platform download
+  const finalizeFileReceive = useCallback((peerId: string, rx: ReceivingSession) => {
+    if (!receivingTransferByPeer.current.has(peerId)) return;
+    receivingTransferByPeer.current.delete(peerId);
+
+    // Flush any pending chunks in the active batch into blobParts
+    if (rx.currentBatch.length > 0) {
+      rx.blobParts.push(new Blob(rx.currentBatch));
+      rx.currentBatch = [];
+    }
+    const blobParts = rx.blobParts;
+    rx.blobParts = [];
+    const effectiveType = inferMimeType(rx.fileName, rx.fileType);
+
+    try {
+      const blob = new Blob(blobParts, {
+        type: effectiveType,
+      });
+      blobParts.length = 0;
+      const downloadUrl = URL.createObjectURL(blob);
+
+      const isIOS =
+        typeof navigator !== 'undefined' &&
+        (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+
+      if (isIOS) {
+        setIncomingProgress(null);
+        setIncomingTransfer({
+          senderId: peerId,
+          senderName: rx.senderName,
+          type: 'file-offer',
+          content: rx.fileName,
+          receivedAt: Date.now(),
+          completedDownload: {
+            url: downloadUrl,
+            fileName: rx.fileName,
+            fileSize: rx.fileSize,
+            fileType: effectiveType,
+            blob,
+          },
+        });
+      } else {
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = rx.fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(downloadUrl), 30000);
+        setTimeout(() => {
+          setIncomingProgress(null);
+          setIncomingTransfer(null);
+        }, 1200);
+      }
+    } catch (err) {
+      console.error('[P2P] Failed to assemble or trigger download for file:', err);
+      setIncomingProgress(null);
+      setIncomingTransfer(null);
+    }
+  }, []);
+
   // Unified handler for all incoming transfer control and content payloads (via DC or WebSocket)
   const handleIncomingPayload = useCallback(
     (senderId: string, data: TransferPayload, dc?: RTCDataChannel): void => {
@@ -358,42 +444,17 @@ export function useP2P(initialRoomCode = '') {
               try {
                 let targetDc: RTCDataChannel | null = dc || null;
                 if (!targetDc || targetDc.readyState !== 'open') {
-                  const existing = dataChannels.current.get(pending.peerId);
-                  if (existing && existing.readyState === 'open') {
-                    targetDc = existing;
-                  } else {
-                    console.info(`[P2P] Awaiting WebRTC DataChannel (up to 2000ms) for peer ${pending.peerId}...`);
-                    try {
-                      targetDc = await ensureDataChannelRef.current(pending.peerId, 2000);
-                    } catch (dcErr) {
-                      console.info(`[P2P] WebRTC direct DataChannel not ready (${dcErr}), engaging signaling relay fallback`);
-                      targetDc = null;
-                    }
-                  }
+                  targetDc = await ensureDataChannelRef.current(senderId, 2500);
                 }
-
                 if (targetDc && targetDc.readyState === 'open') {
                   targetDc.binaryType = 'arraybuffer';
-                  await streamFileChunksDC(
-                    targetDc,
-                    pending.file,
-                    transferId,
-                    pending.peerId,
-                    pending.resolve
-                  );
+                  streamFileChunksDC(targetDc, pending.file, transferId, pending.peerId, pending.resolve);
                 } else {
-                  await streamFileChunksRelay(
-                    pending.file,
-                    transferId,
-                    pending.peerId,
-                    pending.resolve
-                  );
+                  streamFileChunksRelay(pending.file, transferId, pending.peerId, pending.resolve);
                 }
               } catch (err) {
-                console.error('[P2P] Failed to stream file to peer:', err);
-                pending.resolve(false);
-                pendingFileSends.current.delete(transferId);
-                setOutgoingProgress(null);
+                console.warn('[P2P] DataChannel failed for file send, falling back to relay:', err);
+                streamFileChunksRelay(pending.file, transferId, pending.peerId, pending.resolve);
               }
             })();
           }
@@ -406,8 +467,8 @@ export function useP2P(initialRoomCode = '') {
           if (pending) {
             pending.resolve(false);
             pendingFileSends.current.delete(transferId);
+            setOutgoingProgress(null);
           }
-          setOutgoingProgress(null);
           break;
         }
 
@@ -427,8 +488,14 @@ export function useP2P(initialRoomCode = '') {
           for (let i = 0; i < len; i++) {
             bytes[i] = binaryStr.charCodeAt(i);
           }
-          rx.chunks.push(bytes.buffer);
+          rx.currentBatch.push(bytes.buffer);
           rx.receivedChunks++;
+
+          // Flush batch into intermediate Blob every 64 chunks (~1 MB) to prevent heap exhaustion on iOS
+          if (rx.currentBatch.length >= 64) {
+            rx.blobParts.push(new Blob(rx.currentBatch));
+            rx.currentBatch = [];
+          }
 
           const pct = Math.min(100, Math.round((rx.receivedChunks / rx.totalChunks) * 100));
 
@@ -448,52 +515,15 @@ export function useP2P(initialRoomCode = '') {
           }
 
           if (rx.receivedChunks >= rx.totalChunks) {
-            try {
-              const blob = new Blob(rx.chunks, {
-                type: rx.fileType || 'application/octet-stream',
-              });
-              const downloadUrl = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = downloadUrl;
-              a.download = rx.fileName;
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              setTimeout(() => URL.revokeObjectURL(downloadUrl), 10000);
-            } catch (err) {
-              console.error('[P2P] Failed to assemble or trigger download for file:', err);
-            }
-
-            receivingTransferByPeer.current.delete(senderId);
-            setTimeout(() => {
-              setIncomingProgress(null);
-              setIncomingTransfer(null);
-            }, 1200);
+            finalizeFileReceive(senderId, rx);
           }
           break;
         }
 
         case 'file-done': {
           const rx = receivingTransferByPeer.current.get(senderId);
-          if (rx && rx.chunks.length > 0) {
-            try {
-              const blob = new Blob(rx.chunks, {
-                type: rx.fileType || 'application/octet-stream',
-              });
-              const downloadUrl = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = downloadUrl;
-              a.download = rx.fileName;
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              setTimeout(() => URL.revokeObjectURL(downloadUrl), 10000);
-            } catch (err) {
-              console.error('[P2P] file-done error assembling blob:', err);
-            }
-            receivingTransferByPeer.current.delete(senderId);
-            setIncomingProgress(null);
-            setIncomingTransfer(null);
+          if (rx && (rx.blobParts.length > 0 || rx.currentBatch.length > 0)) {
+            finalizeFileReceive(senderId, rx);
           }
           break;
         }
@@ -541,99 +571,94 @@ export function useP2P(initialRoomCode = '') {
       console.warn(`[P2P] DataChannel error with peer ${peerId}:`, err);
     };
 
-    dc.onmessage = async (event) => {
-      const raw = event.data;
-      const isString = typeof raw === 'string';
+    let messageQueue: Promise<void> = Promise.resolve();
 
-      // 1. Binary chunk handling (supports ArrayBuffer, Blob, and typed arrays)
-      if (!isString) {
-        let buffer: ArrayBuffer;
-        try {
-          if (raw instanceof ArrayBuffer) {
-            buffer = raw;
-          } else if (typeof Blob !== 'undefined' && raw instanceof Blob) {
-            buffer = await raw.arrayBuffer();
-          } else if (raw && typeof raw === 'object' && raw.buffer instanceof ArrayBuffer) {
-            buffer = raw.buffer;
-          } else {
-            console.warn('[P2P] Received unknown binary chunk format:', raw);
+    dc.onmessage = (event) => {
+      messageQueue = messageQueue.then(async () => {
+        const raw = event.data;
+        const isString = typeof raw === 'string';
+
+        // 1. Binary chunk handling (supports ArrayBuffer, Blob, and typed arrays)
+        if (!isString) {
+          let buffer: ArrayBuffer;
+          try {
+            if (raw instanceof ArrayBuffer) {
+              buffer = raw;
+            } else if (typeof Blob !== 'undefined' && raw instanceof Blob) {
+              buffer = await raw.arrayBuffer();
+            } else if (raw && typeof raw === 'object' && raw.buffer instanceof ArrayBuffer) {
+              const byteOffset = raw.byteOffset || 0;
+              const byteLength = raw.byteLength !== undefined ? raw.byteLength : raw.buffer.byteLength;
+              buffer =
+                byteOffset === 0 && byteLength === raw.buffer.byteLength
+                  ? raw.buffer
+                  : raw.buffer.slice(byteOffset, byteOffset + byteLength);
+            } else {
+              console.warn('[P2P] Received unknown binary chunk format:', raw);
+              return;
+            }
+          } catch (err) {
+            console.error('[P2P] Error converting binary chunk to ArrayBuffer:', err);
             return;
           }
-        } catch (err) {
-          console.error('[P2P] Error converting binary chunk to ArrayBuffer:', err);
-          return;
-        }
 
-        const rx = receivingTransferByPeer.current.get(peerId);
-        if (!rx) {
-          console.warn('[P2P] Received binary chunk with no active receiving session for peer', peerId);
-          return;
-        }
-
-        rx.chunks.push(buffer);
-        rx.receivedChunks++;
-
-        const pct = Math.min(100, Math.round((rx.receivedChunks / rx.totalChunks) * 100));
-
-        if (rx.totalChunks < 20 || rx.receivedChunks % 4 === 0 || rx.receivedChunks === rx.totalChunks) {
-          setIncomingProgress({
-            transferId: rx.transferId,
-            peerId,
-            peerName: rx.senderName,
-            fileName: rx.fileName,
-            fileSize: rx.fileSize,
-            fileType: rx.fileType,
-            chunksTransferred: rx.receivedChunks,
-            totalChunks: rx.totalChunks,
-            percentage: pct,
-            direction: 'receiving',
-          });
-        }
-
-        if (rx.receivedChunks >= rx.totalChunks) {
-          try {
-            const blob = new Blob(rx.chunks, {
-              type: rx.fileType || 'application/octet-stream',
-            });
-            const downloadUrl = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = downloadUrl;
-            a.download = rx.fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            setTimeout(() => URL.revokeObjectURL(downloadUrl), 10000);
-          } catch (err) {
-            console.error('[P2P] Failed to assemble or trigger download for file:', err);
+          const rx = receivingTransferByPeer.current.get(peerId);
+          if (!rx) {
+            console.warn('[P2P] Received binary chunk with no active receiving session for peer', peerId);
+            return;
           }
 
-          receivingTransferByPeer.current.delete(peerId);
-          setTimeout(() => {
-            setIncomingProgress(null);
-            setIncomingTransfer(null);
-          }, 1200);
-        }
-        return;
-      }
+          rx.currentBatch.push(buffer);
+          rx.receivedChunks++;
 
-      // 2. JSON control / payload frames
-      try {
-        const data: TransferPayload = JSON.parse(raw);
-        if (handleIncomingPayloadRef.current) {
-          handleIncomingPayloadRef.current(peerId, data, dc);
+          // Flush batch into intermediate Blob every 64 chunks (~1 MB) to prevent heap exhaustion on iOS
+          if (rx.currentBatch.length >= 64) {
+            rx.blobParts.push(new Blob(rx.currentBatch));
+            rx.currentBatch = [];
+          }
+
+          const pct = Math.min(100, Math.round((rx.receivedChunks / rx.totalChunks) * 100));
+
+          if (rx.totalChunks < 20 || rx.receivedChunks % 4 === 0 || rx.receivedChunks === rx.totalChunks) {
+            setIncomingProgress({
+              transferId: rx.transferId,
+              peerId,
+              peerName: rx.senderName,
+              fileName: rx.fileName,
+              fileSize: rx.fileSize,
+              fileType: rx.fileType,
+              chunksTransferred: rx.receivedChunks,
+              totalChunks: rx.totalChunks,
+              percentage: pct,
+              direction: 'receiving',
+            });
+          }
+
+          if (rx.receivedChunks >= rx.totalChunks) {
+            finalizeFileReceive(peerId, rx);
+          }
+          return;
         }
-      } catch {
-        // Fallback for plain text
-        setIncomingTransfer({
-          senderId: peerId,
-          senderName: 'Nearby Device',
-          type: 'text',
-          content: String(raw),
-          receivedAt: Date.now(),
-        });
-      }
+
+        // 2. JSON control / payload frames
+        try {
+          const data: TransferPayload = JSON.parse(raw);
+          if (handleIncomingPayloadRef.current) {
+            handleIncomingPayloadRef.current(peerId, data, dc);
+          }
+        } catch {
+          // Fallback for plain text
+          setIncomingTransfer({
+            senderId: peerId,
+            senderName: peersRef.current.find((p) => p.id === peerId)?.name || 'Nearby Device',
+            type: 'text',
+            content: raw,
+            receivedAt: Date.now(),
+          });
+        }
+      });
     };
-  }, []);
+  }, [finalizeFileReceive]);
 
   // Drain queued ICE candidates once remote description is set
   const drainCandidates = useCallback(async (peerId: string, pc: RTCPeerConnection) => {
@@ -1260,7 +1285,8 @@ export function useP2P(initialRoomCode = '') {
 
     receivingTransferByPeer.current.set(senderId, {
       transferId: fileOffer.transferId,
-      chunks: [],
+      currentBatch: [],
+      blobParts: [],
       receivedChunks: 0,
       totalChunks: fileOffer.totalChunks,
       fileName: fileOffer.fileName,
@@ -1289,7 +1315,7 @@ export function useP2P(initialRoomCode = '') {
       timestamp: Date.now(),
     };
 
-    // 1. Send via DataChannel if open
+    // 1. Try sending via WebRTC DataChannel
     const dc = dataChannels.current.get(senderId);
     if (dc && dc.readyState === 'open') {
       try {
@@ -1310,6 +1336,16 @@ export function useP2P(initialRoomCode = '') {
   // Receiver rejects incoming file offer
   const rejectIncomingFile = useCallback(() => {
     if (!incomingTransfer) return;
+    if (incomingTransfer.completedDownload?.url) {
+      try {
+        URL.revokeObjectURL(incomingTransfer.completedDownload.url);
+      } catch (err) {
+        console.warn('[P2P] Error revoking object URL:', err);
+      }
+      setIncomingTransfer(null);
+      setIncomingProgress(null);
+      return;
+    }
     if (incomingTransfer.type === 'file-offer' && incomingTransfer.fileOffer) {
       const rejectPayload: TransferPayload = {
         type: 'file-reject',
@@ -1336,6 +1372,15 @@ export function useP2P(initialRoomCode = '') {
   }, [incomingTransfer, sendSignal]);
 
   const clearIncoming = useCallback(() => {
+    if (incomingTransfer?.completedDownload?.url) {
+      try {
+        URL.revokeObjectURL(incomingTransfer.completedDownload.url);
+      } catch (err) {
+        console.warn('[P2P] Error revoking object URL:', err);
+      }
+      setIncomingTransfer(null);
+      return;
+    }
     if (incomingTransfer && incomingTransfer.type === 'file-offer') {
       rejectIncomingFile();
     } else {
