@@ -62,6 +62,7 @@ export const CreatedPage: React.FC = () => {
     wsStatus,
     peers,
     sendToPeer,
+    reconnect,
   } = useP2PContext();
 
   const [sendingTo, setSendingTo] = useState<Record<string, boolean>>({});
@@ -325,14 +326,25 @@ export const CreatedPage: React.FC = () => {
                     : 'bg-rose-400'
                 }`}
               />
-              <span>
-                {wsStatus === 'connected'
-                  ? peers.length > 0
-                    ? `${peers.length} peer${peers.length !== 1 ? 's' : ''} online`
-                    : 'Searching for peers...'
-                  : wsStatus === 'connecting'
-                  ? 'Connecting radar...'
-                  : 'Radar offline'}
+              <span className="flex items-center gap-1.5">
+                <span>
+                  {wsStatus === 'connected'
+                    ? peers.length > 0
+                      ? `${peers.length} peer${peers.length !== 1 ? 's' : ''} online`
+                      : 'Searching for peers...'
+                    : wsStatus === 'connecting'
+                    ? 'Connecting radar...'
+                    : 'Radar offline'}
+                </span>
+                {wsStatus !== 'connected' && wsStatus !== 'connecting' && (
+                  <button
+                    type="button"
+                    onClick={reconnect}
+                    className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline font-semibold"
+                  >
+                    (Retry)
+                  </button>
+                )}
               </span>
             </div>
           </div>
@@ -402,7 +414,9 @@ export const CreatedPage: React.FC = () => {
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {wsStatus === 'connected'
                   ? "No nearby devices detected on your local network. Open GhostURL on another device or tab to share."
-                  : "Connecting to local P2P signaling network..."}
+                  : wsStatus === 'connecting'
+                  ? "Connecting to local P2P signaling network..."
+                  : "Radar is offline. Ensure VITE_WS_URL or VITE_API_BASE_URL is set in Vercel project settings and redeployed."}
               </p>
             </div>
           )}

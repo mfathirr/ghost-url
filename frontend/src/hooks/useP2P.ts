@@ -11,8 +11,10 @@ const RTC_CONFIG: RTCConfiguration = {
 
 function getWebSocketUrl(roomCode?: string): string {
   const envWs = import.meta.env.VITE_WS_URL;
+  const envApi = import.meta.env.VITE_API_BASE_URL;
   let base: string;
-  if (envWs) {
+
+  if (envWs && envWs.trim() !== '') {
     base = envWs.trim().replace(/\/+$/, '');
     // Support users passing https:// or http:// instead of wss:// or ws://
     if (base.startsWith('https://')) {
@@ -24,9 +26,25 @@ function getWebSocketUrl(roomCode?: string): string {
     if (!base.includes('/ws/p2p')) {
       base = `${base}/ws/p2p`;
     }
+  } else if (envApi && envApi.trim().startsWith('http')) {
+    // Automatically infer WebSocket URL from API URL!
+    // e.g. https://ghost-backend.up.railway.app/api -> wss://ghost-backend.up.railway.app/ws/p2p
+    try {
+      const parsed = new URL(envApi.trim());
+      const wsProto = parsed.protocol === 'https:' ? 'wss:' : 'ws:';
+      base = `${wsProto}//${parsed.host}/ws/p2p`;
+    } catch {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      base = `${protocol}//${window.location.host}/ws/p2p`;
+    }
   } else {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     base = `${protocol}//${window.location.host}/ws/p2p`;
+  }
+
+  // Always enforce wss:// if frontend is running over https:// to prevent mixed content errors
+  if (window.location.protocol === 'https:' && base.startsWith('ws://')) {
+    base = 'wss://' + base.slice(5);
   }
 
   if (roomCode && roomCode.trim() !== '') {
@@ -49,6 +67,8 @@ export function useP2P(initialRoomCode = '') {
   const dataChannels = useRef<Map<string, RTCDataChannel>>(new Map());
   const pendingCandidates = useRef<Map<string, RTCIceCandidateInit[]>>(new Map());
   const selfInfoRef = useRef<PeerInfo | null>(null);
+  const isUnmountedRef = useRef(false);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     selfInfoRef.current = selfInfo;
@@ -159,19 +179,41 @@ export function useP2P(initialRoomCode = '') {
     setWsStatus('connecting');
 
     const url = getWebSocketUrl(roomCode);
-    const ws = new WebSocket(url);
+    console.info(`[P2P] Connecting to signaling server: ${url}`);
+
+    let ws: WebSocket;
+    try {
+      ws = new WebSocket(url);
+    } catch (err) {
+      console.error(`[P2P] Failed to construct WebSocket for ${url}:`, err);
+      setWsStatus('error');
+      return;
+    }
     wsRef.current = ws;
 
     ws.onopen = () => {
+      console.info(`[P2P] Connected to ${url}`);
       setWsStatus('connected');
     };
 
-    ws.onerror = () => {
+    ws.onerror = (err) => {
+      console.error(`[P2P] WebSocket connection error on ${url}:`, err);
       setWsStatus('error');
     };
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
+      console.warn(`[P2P] WebSocket closed (code=${event.code}, reason=${event.reason || 'none'}). Target was ${url}`);
       setWsStatus('disconnected');
+
+      // Attempt auto-reconnect if component is still mounted
+      if (!isUnmountedRef.current) {
+        if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = setTimeout(() => {
+          if (!isUnmountedRef.current) {
+            connectWebSocket();
+          }
+        }, 3500);
+      }
     };
 
     ws.onmessage = async (event) => {
@@ -293,9 +335,15 @@ export function useP2P(initialRoomCode = '') {
     const dcs = dataChannels.current;
     const candidates = pendingCandidates.current;
 
+    isUnmountedRef.current = false;
     connectWebSocket();
 
     return () => {
+      isUnmountedRef.current = true;
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;
