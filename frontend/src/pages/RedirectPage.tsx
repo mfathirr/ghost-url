@@ -14,6 +14,7 @@ import {
 import { getLinkMetadata, unlockLink } from '../services/api';
 import type { LinkMetadata } from '../types';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { SEO } from '../components/SEO';
 
 export const RedirectPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -85,6 +86,11 @@ export const RedirectPage: React.FC = () => {
   if (loading || redirecting) {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center">
+        <SEO
+          title={redirecting ? 'Redirecting...' : 'Verifying Link'}
+          description="Verifying ephemeral link destination."
+          noIndex={true}
+        />
         <LoadingSpinner message={redirecting ? 'Access granted. Redirecting to destination...' : 'Verifying ghost link...'} />
       </div>
     );
@@ -94,6 +100,11 @@ export const RedirectPage: React.FC = () => {
   if (notFound || !metadata) {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center animate-fade-in">
+        <SEO
+          title="Link Vanished"
+          description="This ephemeral link has expired or does not exist."
+          noIndex={true}
+        />
         <div className="w-20 h-20 mx-auto rounded-3xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 flex items-center justify-center text-slate-400 mb-6 shadow-inner">
           <Ghost className="w-10 h-10 animate-pulse" />
         </div>
@@ -119,15 +130,20 @@ export const RedirectPage: React.FC = () => {
   // Passcode Protected View
   return (
     <div className="max-w-md mx-auto px-4 py-16 animate-fade-in">
+      <SEO
+        title="Passcode Protected Link"
+        description="Enter passcode to unlock this ephemeral link."
+        noIndex={true}
+      />
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800/90 rounded-2xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 dark:shadow-none">
         {/* Header */}
         <div className="text-center mb-6">
           <div className="w-14 h-14 mx-auto rounded-2xl bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800/70 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-3 shadow-md shadow-indigo-500/10">
             <Lock className="w-7 h-7" />
           </div>
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
             Passcode Protected
-          </h2>
+          </h1>
           <p className="mt-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
             Enter the secret passcode to access this destination.
           </p>

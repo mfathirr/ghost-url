@@ -17,6 +17,7 @@ import { useP2PContext } from '../context/P2PContext';
 import { PeerAvatarWithProgress } from '../components/PeerAvatarWithProgress';
 import type { PeerInfo } from '../types/p2p';
 import { copyToClipboard } from '../utils/clipboard';
+import { SEO } from '../components/SEO';
 
 interface CreatedState {
   slug: string;
@@ -147,6 +148,12 @@ export const CreatedPage: React.FC = () => {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-12 sm:py-16 animate-fade-in">
+      <SEO
+        title="Ghost Link Live"
+        description="Share this ephemeral link. It will automatically self-destruct once expired."
+        noIndex={true}
+      />
+
       {/* Success Badge */}
       <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 text-emerald-600 dark:text-emerald-400 mb-4 shadow-lg shadow-emerald-500/10">
@@ -230,10 +237,10 @@ export const CreatedPage: React.FC = () => {
         {/* QR Code Section */}
         <div className="border-t border-slate-100 dark:border-slate-800/80 pt-6">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
+            <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
               <QrCode className="w-4 h-4 text-indigo-500" />
               <span>QR Code for Mobile Access</span>
-            </div>
+            </h2>
             <button
               onClick={downloadQR}
               className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
@@ -292,10 +299,10 @@ export const CreatedPage: React.FC = () => {
         {/* Nearby Share Section */}
         <div className="border-t border-slate-100 dark:border-slate-800/80 pt-6">
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
+            <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
               <Radio className="w-4 h-4 text-indigo-500" />
               <span>Share to Nearby Device</span>
-            </div>
+            </h2>
             <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
               <span
                 className={`w-2 h-2 rounded-full inline-block ${

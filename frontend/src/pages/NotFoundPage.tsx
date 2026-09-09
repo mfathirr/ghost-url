@@ -1,10 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Ghost, Home } from 'lucide-react';
+import { SEO } from '../components/SEO';
 
 export const NotFoundPage: React.FC = () => {
   return (
     <div className="max-w-md mx-auto px-4 py-24 text-center animate-fade-in">
+      <SEO
+        title="404 - Page Not Found"
+        description="The page you are looking for has vanished or does not exist."
+        noIndex={true}
+      />
       <div className="w-20 h-20 mx-auto rounded-3xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 flex items-center justify-center text-slate-400 mb-6 shadow-inner">
         <Ghost className="w-10 h-10 animate-pulse" />
       </div>

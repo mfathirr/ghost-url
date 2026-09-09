@@ -35,7 +35,17 @@ const AppContent: React.FC = () => {
       </main>
       <footer className="border-t border-slate-200/80 dark:border-slate-800/80 py-8 px-4 text-center text-xs text-slate-500 dark:text-slate-400">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>GhostURL — Ephemeral Link Sharing & Zero-Trace P2P Drop</div>
+          <div>
+            GhostURL — Ephemeral Link Sharing &amp; Zero-Storage P2P Beaming •{' '}
+            <a
+              href="https://github.com/mfathirr/ghost-url"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-indigo-600 dark:hover:text-indigo-400 underline underline-offset-2 transition-colors"
+            >
+              Open Source (MIT)
+            </a>
+          </div>
           <div className="flex items-center gap-4 text-slate-400 dark:text-slate-500">
             <span>Zero Persistent Logs</span>
             <span>•</span>

@@ -1,0 +1,37 @@
+# GhostURL
+
+> Privacy-first, ephemeral link sharing and zero-storage WebRTC peer-to-peer file transfer.
+
+## About
+
+GhostURL is an open-source, account-less, privacy-preserving sharing utility. It combines self-destructing short links backed by Redis hardware TTL auto-eviction with direct browser-to-browser file beaming (GhostDrop) over encrypted WebRTC DataChannels with zero persistent server storage.
+
+## Capabilities
+
+- **Quick Bridge (Ephemeral Link Shortener)**: Account-less, expiring short links with preset or custom TTL (5m up to 7 days). Optional salted bcrypt passcode protection and vanity aliases.
+- **Nearby Radar (Zero-Setup P2P Link & Text Transfer)**: Instant local-network device discovery with 6-digit room code fallback. Direct encrypted client-to-client transfer over WebRTC DataChannels.
+- **GhostDrop (Zero-Storage P2P File Beaming)**: Direct browser-to-browser streaming for files of arbitrary size with dual-engine flow control (WebRTC DataChannels + WebSocket signaling relay fallback). Zero server, disk, or database retention.
+
+## Security & Privacy Invariants
+
+- Zero database or disk persistence for P2P and GhostDrop payloads.
+- Ephemeral Redis retention with explicit hardware TTL eviction.
+- Salted bcrypt hashing for link passcodes.
+- Zero client IP logging to persistent disk.
+- Cookieless, GDPR-compliant analytics telemetry.
+
+## Key Pages
+
+- [Home / App](https://www.ghosturl.web.id/): Main application interface for creating ephemeral links and beaming files via GhostDrop.
+
+## Technical Specifications
+
+- Frontend: React 19, TypeScript, Vite, Tailwind CSS
+- Backend: Go 1.22+, Gin Framework, Gorilla WebSocket
+- Datastore: Redis 7 (In-Memory RAM with native EXPIRE)
+- P2P Protocols: WebRTC DataChannels (binary streaming), STUN negotiation
+
+## Source Code & License
+
+- Repository: https://github.com/mfathirr/ghost-url
+- License: MIT License

@@ -27,6 +27,40 @@ import { GhostDropZone } from '../components/GhostDropZone';
 import { PeerAvatarWithProgress } from '../components/PeerAvatarWithProgress';
 import type { PeerInfo } from '../types/p2p';
 import { copyToClipboard } from '../utils/clipboard';
+import { SEO } from '../components/SEO';
+
+const HOME_JSON_LD = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      '@id': 'https://www.ghosturl.web.id/#website',
+      url: 'https://www.ghosturl.web.id/',
+      name: 'GhostURL',
+      description: 'Ephemeral link sharing and zero-storage WebRTC P2P file transfer.',
+    },
+    {
+      '@type': 'WebApplication',
+      '@id': 'https://www.ghosturl.web.id/#app',
+      name: 'GhostURL',
+      url: 'https://www.ghosturl.web.id/',
+      applicationCategory: 'UtilitiesApplication',
+      operatingSystem: 'All',
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+      },
+      featureList: [
+        'Self-destructing short links with Redis hardware TTL auto-eviction',
+        'Optional salted bcrypt passcode protection',
+        'Local-network peer-to-peer device discovery via WebRTC DataChannels',
+        'GhostDrop: Browser-to-browser zero-storage file beaming of arbitrary size',
+        'Zero persistent disk or database retention for transfers',
+      ],
+    },
+  ],
+};
 
 export const CreatePage: React.FC = () => {
   const navigate = useNavigate();
@@ -188,11 +222,25 @@ export const CreatePage: React.FC = () => {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-12 sm:py-16">
+      <SEO
+        title="Ephemeral Link Sharing & P2P File Beaming"
+        canonical="https://www.ghosturl.web.id/"
+        jsonLd={HOME_JSON_LD}
+      />
+
       {/* Mode Switcher Pill */}
       <div className="flex justify-center mb-8">
-        <div className="inline-flex p-1.5 rounded-2xl bg-slate-200/70 dark:bg-slate-900/90 border border-slate-300/70 dark:border-slate-800 shadow-inner">
+        <div
+          role="tablist"
+          aria-label="Sharing Mode Selection"
+          className="inline-flex p-1.5 rounded-2xl bg-slate-200/70 dark:bg-slate-900/90 border border-slate-300/70 dark:border-slate-800 shadow-inner"
+        >
           <button
             type="button"
+            role="tab"
+            id="tab-ghost-link"
+            aria-selected={mode === 'link'}
+            aria-controls="panel-ghost-link"
             onClick={() => setMode('link')}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
               mode === 'link'
@@ -205,6 +253,10 @@ export const CreatePage: React.FC = () => {
           </button>
           <button
             type="button"
+            role="tab"
+            id="tab-ghost-drop"
+            aria-selected={mode === 'drop'}
+            aria-controls="panel-ghost-drop"
             onClick={() => setMode('drop')}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
               mode === 'drop'
@@ -261,7 +313,7 @@ export const CreatePage: React.FC = () => {
       {/* Main Card */}
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800/90 rounded-2xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all">
         {mode === 'link' ? (
-          <>
+          <div id="panel-ghost-link" role="tabpanel" aria-labelledby="tab-ghost-link">
             {errorMessage && (
               <div className="mb-6 p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 flex items-start gap-3 text-rose-700 dark:text-rose-300 text-sm">
                 <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
@@ -440,10 +492,10 @@ export const CreatePage: React.FC = () => {
                 )}
               </button>
             </form>
-          </>
+          </div>
         ) : (
           /* GhostDrop Mode */
-          <div className="space-y-8 animate-fade-in">
+          <div id="panel-ghost-drop" role="tabpanel" aria-labelledby="tab-ghost-drop" className="space-y-8 animate-fade-in">
             {/* Drop Zone */}
             <GhostDropZone selectedFile={selectedFile} onFileSelected={setSelectedFile} />
 
@@ -453,9 +505,9 @@ export const CreatePage: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-2">
                     <Radio className="w-4 h-4 text-emerald-500" />
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    <h2 className="text-sm font-bold text-slate-900 dark:text-white">
                       Nearby Radar Devices
-                    </h3>
+                    </h2>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     {selectedFile
@@ -562,9 +614,9 @@ export const CreatePage: React.FC = () => {
                   <div className="w-12 h-12 mx-auto rounded-xl bg-slate-100 dark:bg-slate-800/80 flex items-center justify-center text-slate-400 mb-3">
                     <Radio className="w-6 h-6 animate-pulse text-indigo-500" />
                   </div>
-                  <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                  <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">
                     Searching for nearby devices...
-                  </h4>
+                  </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto mb-4">
                     Open GhostURL on another computer, tablet, or phone on the same Wi-Fi network to beam files instantly.
                   </p>
@@ -584,70 +636,75 @@ export const CreatePage: React.FC = () => {
       </div>
 
       {/* Trust Highlights */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8 text-center sm:text-left">
-        {mode === 'link' ? (
-          <>
-            <div className="p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/40">
-              <div className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-1">
-                Hard TTL Expiration
+      <section aria-labelledby="trust-guarantees-heading" className="mt-8">
+        <h2 id="trust-guarantees-heading" className="sr-only">
+          Privacy &amp; Security Architecture Guarantees
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center sm:text-left">
+          {mode === 'link' ? (
+            <>
+              <div className="p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/40">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-1">
+                  Hard TTL Expiration
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  Keys are purged directly by Redis memory management when TTL expires.
+                </p>
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                Keys are purged directly by Redis memory management when TTL expires.
-              </p>
-            </div>
 
-            <div className="p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/40">
-              <div className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">
-                Account-less Privacy
+              <div className="p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/40">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">
+                  Account-less Privacy
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  No signup, cookies, or user tracking. Ephemeral by design.
+                </p>
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                No signup, cookies, or user tracking. Ephemeral by design.
-              </p>
-            </div>
 
-            <div className="p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/40">
-              <div className="text-xs font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400 mb-1">
-                Bcrypt Protection
+              <div className="p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/40">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400 mb-1">
+                  Bcrypt Protection
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  Passcodes are hashed with bcrypt before storing. Plaintext is never saved.
+                </p>
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                Passcodes are hashed with bcrypt before storing. Plaintext is never saved.
-              </p>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/40">
-              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">
-                <Lock className="w-3.5 h-3.5" />
-                <span>Zero Server Storage</span>
+            </>
+          ) : (
+            <>
+              <div className="p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/40">
+                <h3 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Zero Server Storage</span>
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  Data travels directly device-to-device via WebRTC. Never saved on servers or databases.
+                </p>
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                Data travels directly device-to-device via WebRTC. Never saved on servers or databases.
-              </p>
-            </div>
 
-            <div className="p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/40">
-              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-1">
-                <Zap className="w-3.5 h-3.5" />
-                <span>Local Wi-Fi Speed</span>
+              <div className="p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/40">
+                <h3 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-1">
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>Local Wi-Fi Speed</span>
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  Streams at maximum network throughput (up to 100+ MB/s) without cloud upload wait times.
+                </p>
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                Streams at maximum network throughput (up to 100+ MB/s) without cloud upload wait times.
-              </p>
-            </div>
 
-            <div className="p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/40">
-              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400 mb-1">
-                <Globe2 className="w-3.5 h-3.5" />
-                <span>Cross-Platform</span>
+              <div className="p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/40">
+                <h3 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400 mb-1">
+                  <Globe2 className="w-3.5 h-3.5" />
+                  <span>Cross-Platform</span>
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  Works seamlessly across Mac, Windows, iPhone, Android, and Linux in any modern browser.
+                </p>
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                Works seamlessly across Mac, Windows, iPhone, Android, and Linux in any modern browser.
-              </p>
-            </div>
-          </>
-        )}
-      </div>
+            </>
+          )}
+        </div>
+      </section>
     </div>
   );
 };

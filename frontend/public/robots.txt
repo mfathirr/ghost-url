@@ -1,0 +1,44 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /ws/
+Disallow: /r/
+Disallow: /created
+
+# AI Crawlers & Assistants
+User-agent: GPTBot
+Allow: /
+Disallow: /api/
+Disallow: /ws/
+Disallow: /r/
+Disallow: /created
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /api/
+Disallow: /ws/
+Disallow: /r/
+Disallow: /created
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /api/
+Disallow: /ws/
+Disallow: /r/
+Disallow: /created
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /api/
+Disallow: /ws/
+Disallow: /r/
+Disallow: /created
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /api/
+Disallow: /ws/
+Disallow: /r/
+Disallow: /created
+
+Sitemap: https://www.ghosturl.web.id/sitemap.xml
