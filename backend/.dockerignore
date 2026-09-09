@@ -1,0 +1,4 @@
+server
+*.test
+.git
+.DS_Store

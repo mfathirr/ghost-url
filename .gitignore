@@ -1,0 +1,36 @@
+# Binaries
+backend/server
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Node dependencies and build artifacts
+node_modules/
+dist/
+.DS_Store
+
+# Logs
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# TLS / certificates
+*.pem
+*.key
+*.crt
+*.p12
+
+# Antigravity IDE local config (not project code)
+.agents/
+skills-lock.json
