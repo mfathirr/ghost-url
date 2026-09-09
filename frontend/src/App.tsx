@@ -4,6 +4,7 @@ import { Navbar } from './components/Navbar';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { P2PProvider, useP2PContext } from './context/P2PContext';
 import { IncomingModal } from './components/IncomingModal';
+import { Analytics } from '@vercel/analytics/react';
 
 const CreatePage = lazy(() => import('./pages/CreatePage'));
 const CreatedPage = lazy(() => import('./pages/CreatedPage'));
@@ -49,6 +50,7 @@ export const App: React.FC = () => {
   return (
     <P2PProvider>
       <AppContent />
+      <Analytics />
     </P2PProvider>
   );
 };

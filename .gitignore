@@ -34,3 +34,8 @@ dist/
 # Antigravity IDE local config (not project code)
 .agents/
 skills-lock.json
+
+# Obsidian Documentation Vault & Local Antigravity Docs
+docs/
+.obsidian/
+GEMINI.md
