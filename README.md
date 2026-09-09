@@ -1,61 +1,73 @@
-# GhostURL 👻
+# GhostURL 👻📡
 
-> Ephemeral, account-less link sharing application built with Go (Gin), React (Vite & Tailwind CSS), and Redis.
+> Ephemeral link sharing with automatic Redis TTL expiration & local-network Peer-to-Peer (P2P) direct transfer modeled after AirDrop and Snapdrop.
 
-GhostURL is designed for secure, temporary link sharing. Links automatically vanish from memory once their time-to-live (TTL) expires. Zero user accounts, zero cookies, zero persistent databases.
-
----
-
-## ✨ Features
-
-- **Ephemeral Expiry via Redis TTL**: Explicit expiration (5m, 30m, 1h, 24h, or custom up to 7 days). No cleanup cron scripts required—Redis memory eviction handles deletion automatically.
-- **Optional Passcode Protection**: Links can be protected with a passcode, hashed using `bcrypt`. Plaintext secrets are never stored.
-- **Custom Aliases**: Choose an optional custom slug (e.g., `my-link`) or let the system generate a cryptographically secure 8-character random slug.
-- **QR Code Sharing**: Instant QR code generation with download option for seamless mobile access.
-- **Dedicated Link Screen**: Instant one-click copy button, live expiry countdown, and test redirect links.
-- **Dark & Light Mode**: Auto-detects system theme with manual persistence toggle.
-- **Production-Grade Performance**: Route-based code splitting, Vite vendor chunk separation, and Go connection pooling.
+GhostURL provides two core privacy-first services in a single lightweight web app:
+1. **Quick Bridge**: Account-less, ephemeral link shortening with auto-expiration via native Redis TTL and optional bcrypt passcode encryption.
+2. **Nearby Radar**: Local-network, zero-setup direct peer-to-peer link and text sharing using WebRTC DataChannels with Go WebSocket signaling.
 
 ---
 
-## 🏗️ Architecture & Stack
+## ✨ Key Features
+
+### 1. ⚡ Quick Bridge (Ephemeral Link Sharing)
+- **Native Redis TTL Expiration**: Links self-destruct after a specified duration (5m, 30m, 1h, 24h, or custom up to 7 days). No cleanup cron scripts required—Redis memory eviction deletes expired keys automatically.
+- **Bcrypt Passcode Protection**: Optional secret code for sensitive links. Passcodes are hashed with `golang.org/x/crypto/bcrypt` before saving.
+- **Custom Slugs**: Choose a custom alias or let the Go backend assign a cryptographically secure 8-character random slug.
+- **Instant QR Code Sharing**: Generate downloadable high-resolution QR codes for instant mobile scanning.
+- **Direct Redirection**: Transparent 302 redirects for public links, with a sleek unlock prompt for passcode-protected URLs.
+
+### 2. 📡 Nearby Radar (Snapdrop/AirDrop P2P Transfer)
+- **Automatic Local Discovery**: Devices on the same public network/Wi-Fi automatically discover each other via client IP grouping.
+- **Device & OS Fingerprinting**: Parses User-Agent to detect OS (macOS, iOS, Windows, Android, Linux) and device form factor (Desktop, Mobile, Tablet).
+- **Random Monikers**: Assigns friendly monikers (e.g., *"Neon Falcon"*, *"Swift Otter"*) to each peer.
+- **WebRTC DataChannels**: Client-to-client direct peer transfer using Google STUN (`stun:stun.l.google.com:19302`). Data never hits persistent backend storage.
+- **Animated Sonar UI**: Visual radar with pulse rings and orbiting peers. Click any device to initiate direct transfer.
+- **Slide-up Notifications**: Real-time modal with one-click "Open Link" and "Copy to Clipboard" buttons.
+- **Manual Room Code Fallback**: Optional 6-digit room code allows peers on different networks or cellular connections to connect seamlessly.
+
+---
+
+## 🏗️ Architecture & Monorepo Structure
 
 ```
 ghost-url/
-├── backend/            # Go 1.21+ API service (Gin, go-redis, bcrypt)
-│   ├── cmd/server/     # Entry point & graceful shutdown
+├── backend/            # Go 1.26 API service (Gin, gorilla/websocket, go-redis, bcrypt)
+│   ├── cmd/server/     # Entry point, router wiring & graceful shutdown
 │   ├── internal/
 │   │   ├── config/     # Environment variable configuration
-│   │   ├── handlers/   # HTTP REST handlers & unit tests
+│   │   ├── handlers/   # HTTP REST link handlers & tests
 │   │   ├── models/     # Request/response structs
-│   │   ├── storage/    # Redis Hash storage & connection pool
-│   │   └── utils/      # Slug generator, validation & tests
+│   │   ├── p2p/        # In-memory signaling hub, client pump, UA parser, tests
+│   │   ├── storage/    # Redis connection pooling & Hash operations
+│   │   └── utils/      # URL validator, slug generator, TTL parser
 │   └── Dockerfile      # Multi-stage Go build
-├── frontend/           # React 18+ SPA (Vite, TypeScript, Tailwind CSS)
+├── frontend/           # React 19 + TypeScript + Vite + Tailwind CSS
 │   ├── src/
-│   │   ├── components/ # Navbar, ThemeToggle, LoadingSpinner
-│   │   ├── pages/      # CreatePage, CreatedPage, RedirectPage, 404
-│   │   ├── services/   # API client
-│   │   └── types/      # TypeScript interfaces
-│   ├── nginx.conf      # SPA reverse proxy & gzip compression
+│   │   ├── components/ # TabBar, Navbar, IncomingModal, ThemeToggle, LoadingSpinner
+│   │   ├── hooks/      # useP2P WebRTC & WebSocket management hook
+│   │   ├── pages/      # CreatePage, RadarPage, CreatedPage, RedirectPage, 404
+│   │   ├── services/   # REST API client
+│   │   └── types/      # TypeScript definitions for Links & P2P signaling
+│   ├── nginx.conf      # SPA reverse proxy, WebSocket upgrade & gzip compression
 │   └── Dockerfile      # Multi-stage Node + Nginx build
-└── docker-compose.yml  # Local orchestration for Redis, backend, frontend
+└── docker-compose.yml  # Container orchestration (Redis, Go backend, Nginx frontend)
 ```
 
 ---
 
 ## 🚀 Quick Start with Docker Compose
 
-To start the entire application (Redis, Go Backend, and React Frontend) with a single command:
+Spin up Redis, the Go Backend, and the React Frontend with one command:
 
 ```bash
 docker compose up --build
 ```
 
-Once started:
-- **Frontend App**: [http://localhost:5173](http://localhost:5173)
-- **Backend API**: [http://localhost:8080](http://localhost:8080)
-- **Redis**: `localhost:6379`
+Once running:
+- **Web Application**: [http://localhost:5173](http://localhost:5173)
+- **Go API & WebSocket Hub**: [http://localhost:8080](http://localhost:8080)
+- **Redis Server**: `localhost:6379`
 
 To stop all services:
 ```bash
@@ -64,10 +76,21 @@ docker compose down
 
 ---
 
+## 🧪 Testing P2P Radar Across Two Browser Tabs
+
+1. Open [http://localhost:5173](http://localhost:5173) in your browser.
+2. Click on the **Nearby Radar** tab. You'll see your device in the center of the radar (e.g. *"You • macOS • Neon Falcon"*).
+3. Open a second browser tab (or an Incognito window) at [http://localhost:5173](http://localhost:5173) and switch to the **Nearby Radar** tab.
+4. Each tab will immediately appear on the other's radar circle as an orbiting peer!
+5. In Tab 1, click on Tab 2's icon to open the direct send panel.
+6. Enter a URL (e.g. `https://github.com`) or text message and click **Direct Send**.
+7. In Tab 2, a notification modal slides up from the bottom with **Open Link** and **Copy to Clipboard** options!
+
+---
+
 ## 🛠️ Local Development (Without Docker)
 
 ### 1. Start Redis
-Make sure Redis is running locally on port `6379`:
 ```bash
 redis-server
 ```
@@ -77,48 +100,50 @@ redis-server
 cd backend
 go run ./cmd/server
 ```
-The backend will run on `http://localhost:8080`.
+Runs on `http://localhost:8080`.
 
 ### 3. Run React Frontend
 ```bash
 cd frontend
-bun install   # or npm install
-bun dev       # or npm run dev
+npm install # or bun install
+npm run dev # or bun dev
 ```
-The frontend dev server runs on `http://localhost:5173` with an automatic proxy forwarding `/api` to the backend.
+Runs on `http://localhost:5173`. Proxies `/api` and `/ws` to `http://localhost:8080`.
 
 ---
 
-## 🧪 Testing
+## 🧪 Automated Testing
 
-### Backend Unit Tests
+### Backend Unit Tests (Handlers, P2P Hub, IP Extraction, UA Parser, Slug Generator)
 ```bash
 cd backend
 go test -v ./...
 ```
 
-### Frontend Typecheck & Production Build
+### Frontend Typecheck & Build
 ```bash
 cd frontend
-bun run build # or npm run build
+npm run build
 ```
 
 ---
 
-## 📡 API Endpoints
+## 📡 API & WebSocket Reference
 
 | Method | Path | Description |
 |---|---|---|
-| `POST` | `/api/links` | Create a new ephemeral link with optional alias, passcode, and TTL |
-| `GET` | `/api/links/:slug` | Retrieve public link metadata (protection status, TTL remaining) |
-| `POST` | `/api/links/:slug/unlock` | Verify passcode and retrieve original destination URL |
-| `GET` | `/r/:slug` | Direct redirect (302 for open links; redirects to passcode screen if protected) |
-| `GET` | `/health` | Health check endpoint verifying Redis ping status |
+| `POST` | `/api/links` | Create an ephemeral short link with TTL & optional passcode |
+| `GET` | `/api/links/:slug` | Check public metadata (protection status, remaining TTL) |
+| `POST` | `/api/links/:slug/unlock` | Verify passcode and reveal destination URL |
+| `GET` | `/r/:slug` | Direct 302 redirect for open links (or redirect to unlock view) |
+| `GET` | `/ws/p2p` | WebSocket upgrade for IP-based discovery & WebRTC signaling |
+| `GET` | `/health` | Health check probe verifying Redis connection |
 
 ---
 
-## 🔒 Security & Data Modeling
+## 🔒 Security & Privacy
 
-- **Redis Key Convention**: `link:{slug}` stored as a Redis `Hash` containing fields `url`, `passcode_hash`, `created_at`, and `expires_at`.
-- **Atomic TTL**: Stored and expired using a transactional pipeline (`pipe.HSet(...)` + `pipe.Expire(...)`).
-- **Passcode Hashing**: All passcodes are hashed using `golang.org/x/crypto/bcrypt` at standard cost before storing.
+- **Zero Database Persistence for P2P**: WebRTC DataChannels send data directly between clients via browser peer connections.
+- **Zero Log Retention**: IP addresses are extracted in-memory solely for local room partitioning and are never written to disk.
+- **Redis Auto-Eviction**: Links use `SET ... EX` / `EXPIRE` so expired links disappear automatically from memory.
+- **Bcrypt Security**: Sensitive link passcodes are salted and hashed with standard bcrypt cost.

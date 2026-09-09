@@ -12,6 +12,7 @@ import (
 
 	"github.com/ghost-url/backend/internal/config"
 	"github.com/ghost-url/backend/internal/handlers"
+	"github.com/ghost-url/backend/internal/p2p"
 	"github.com/ghost-url/backend/internal/storage"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -47,6 +48,9 @@ func main() {
 	router.Use(cors.New(corsConfig))
 
 	linkHandler := handlers.NewLinkHandler(store, cfg)
+	p2pHub := p2p.NewHub()
+	go p2pHub.Run()
+	p2pHandler := p2p.NewHandler(p2pHub)
 
 	// API Routes
 	api := router.Group("/api")
@@ -58,6 +62,9 @@ func main() {
 
 	// Short redirect route
 	router.GET("/r/:slug", linkHandler.RedirectLink)
+
+	// P2P WebSocket signaling endpoint
+	router.GET("/ws/p2p", p2pHandler.ServeWS)
 
 	// Health check endpoint
 	router.GET("/health", linkHandler.HealthCheck)

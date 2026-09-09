@@ -10,8 +10,15 @@ import {
   QrCode,
   ShieldCheck,
   Download,
+  Radio,
+  Laptop,
+  Smartphone,
+  Tablet,
+  Monitor,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import { useP2PContext } from '../context/P2PContext';
+import type { PeerInfo } from '../types/p2p';
 
 interface CreatedState {
   slug: string;
@@ -20,6 +27,22 @@ interface CreatedState {
   ttl_seconds: number;
   has_passcode: boolean;
   original_url?: string;
+}
+
+function getDeviceIcon(os: string, deviceType: string) {
+  const lowerOS = (os || '').toLowerCase();
+  const lowerDev = (deviceType || '').toLowerCase();
+
+  if (lowerDev === 'mobile') {
+    return <Smartphone className="w-4 h-4 text-indigo-500" />;
+  }
+  if (lowerDev === 'tablet') {
+    return <Tablet className="w-4 h-4 text-indigo-500" />;
+  }
+  if (lowerOS.includes('windows') || lowerOS.includes('linux')) {
+    return <Monitor className="w-4 h-4 text-indigo-500" />;
+  }
+  return <Laptop className="w-4 h-4 text-indigo-500" />;
 }
 
 export const CreatedPage: React.FC = () => {
@@ -33,6 +56,17 @@ export const CreatedPage: React.FC = () => {
     const diff = Math.max(0, Math.floor((new Date(state.expires_at).getTime() - Date.now()) / 1000));
     return diff;
   });
+
+  // Global P2P Context
+  const {
+    wsStatus,
+    peers,
+    sendToPeer,
+  } = useP2PContext();
+
+  const [sendingTo, setSendingTo] = useState<Record<string, boolean>>({});
+  const [sentTo, setSentTo] = useState<Record<string, boolean>>({});
+  const [lastSentPeerName, setLastSentPeerName] = useState<string | null>(null);
 
   useEffect(() => {
     if (!state) {
@@ -57,7 +91,7 @@ export const CreatedPage: React.FC = () => {
     return null;
   }
 
-  // For visitors and QR code: construct full URL based on current origin and slug
+  // For visitors, QR code and P2P: construct full URL based on current origin and slug
   const visitableShortUrl = `${window.location.origin}/r/${state.slug}`;
 
   const handleCopy = async () => {
@@ -67,6 +101,28 @@ export const CreatedPage: React.FC = () => {
       setTimeout(() => setCopied(false), 2500);
     } catch {
       // Fallback
+    }
+  };
+
+  const handleSendToPeer = async (peer: PeerInfo) => {
+    if (sendingTo[peer.id]) return;
+    setSendingTo((prev) => ({ ...prev, [peer.id]: true }));
+    try {
+      const ok = await sendToPeer(peer.id, visitableShortUrl);
+      if (ok) {
+        setSentTo((prev) => ({ ...prev, [peer.id]: true }));
+        setLastSentPeerName(peer.name);
+        setTimeout(() => {
+          setSentTo((prev) => {
+            const next = { ...prev };
+            delete next[peer.id];
+            return next;
+          });
+          setLastSentPeerName(null);
+        }, 2000);
+      }
+    } finally {
+      setSendingTo((prev) => ({ ...prev, [peer.id]: false }));
     }
   };
 
@@ -251,8 +307,109 @@ export const CreatedPage: React.FC = () => {
             <span>Create Another Link</span>
           </Link>
         </div>
+
+        {/* Nearby Share Section */}
+        <div className="border-t border-slate-100 dark:border-slate-800/80 pt-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
+              <Radio className="w-4 h-4 text-indigo-500" />
+              <span>Share to Nearby Device</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+              <span
+                className={`w-2 h-2 rounded-full inline-block ${
+                  wsStatus === 'connected'
+                    ? 'bg-emerald-500'
+                    : wsStatus === 'connecting'
+                    ? 'bg-amber-400 animate-pulse'
+                    : 'bg-rose-400'
+                }`}
+              />
+              <span>
+                {wsStatus === 'connected'
+                  ? peers.length > 0
+                    ? `${peers.length} peer${peers.length !== 1 ? 's' : ''} online`
+                    : 'Searching for peers...'
+                  : wsStatus === 'connecting'
+                  ? 'Connecting radar...'
+                  : 'Radar offline'}
+              </span>
+            </div>
+          </div>
+
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+            Directly beam this ghost link to other devices on your local network using WebRTC P2P. Click any peer to send instantly.
+          </p>
+
+          {/* Sent feedback banner */}
+          {lastSentPeerName && (
+            <div className="mb-3 p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-300 animate-fade-in">
+              <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+              <span className="font-medium">✓ Sent to {lastSentPeerName}!</span>
+            </div>
+          )}
+
+          {peers.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {peers.map((peer) => {
+                const isSent = !!sentTo[peer.id];
+                const isSending = !!sendingTo[peer.id];
+
+                return (
+                  <button
+                    key={peer.id}
+                    type="button"
+                    onClick={() => handleSendToPeer(peer)}
+                    disabled={isSending}
+                    className={`flex items-center justify-between p-3 rounded-xl border transition-all text-left ${
+                      isSent
+                        ? 'border-emerald-500/50 bg-emerald-50/60 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'
+                        : 'border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/40 hover:border-indigo-400 dark:hover:border-indigo-500/60 hover:bg-slate-100 dark:hover:bg-slate-900/60 text-slate-800 dark:text-slate-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center shrink-0 shadow-sm">
+                        {getDeviceIcon(peer.os, peer.deviceType)}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold truncate">{peer.name}</div>
+                        <div className="text-[10px] text-slate-400 capitalize truncate">
+                          {peer.os} • {peer.deviceType}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="ml-2 shrink-0">
+                      {isSent ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 animate-fade-in">
+                          <Check className="w-3.5 h-3.5" />
+                          <span>✓ Sent to {peer.name}!</span>
+                        </span>
+                      ) : isSending ? (
+                        <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
+                          Send
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-950/30 text-center">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {wsStatus === 'connected'
+                  ? "No nearby devices detected on your local network. Open GhostURL on another device or tab to share."
+                  : "Connecting to local P2P signaling network..."}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 };
+
 export default CreatedPage;

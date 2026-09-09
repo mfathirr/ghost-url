@@ -1,6 +1,16 @@
 import type { CreateLinkPayload, CreateLinkResponse, LinkMetadata, UnlockResponse } from '../types';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/api';
+function getApiBase(): string {
+  let base = import.meta.env.VITE_API_BASE_URL || '/api';
+  base = base.replace(/\/+$/, '');
+  // If user passed origin without /api (e.g. https://backend.up.railway.app), append /api
+  if (base.startsWith('http') && !base.endsWith('/api')) {
+    base = `${base}/api`;
+  }
+  return base;
+}
+
+const API_BASE = getApiBase();
 
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {

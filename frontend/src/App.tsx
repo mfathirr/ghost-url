@@ -2,18 +2,20 @@ import React, { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { LoadingSpinner } from './components/LoadingSpinner';
+import { P2PProvider, useP2PContext } from './context/P2PContext';
+import { IncomingModal } from './components/IncomingModal';
 
-// Route-based code splitting following react-vite-best-practices
 const CreatePage = lazy(() => import('./pages/CreatePage'));
 const CreatedPage = lazy(() => import('./pages/CreatedPage'));
 const RedirectPage = lazy(() => import('./pages/RedirectPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
-export const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const { incomingTransfer, clearIncoming } = useP2PContext();
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 transition-colors">
       <Navbar />
-
       <main className="flex-1">
         <Suspense fallback={<LoadingSpinner message="Loading view..." />}>
           <Routes>
@@ -24,12 +26,9 @@ export const App: React.FC = () => {
           </Routes>
         </Suspense>
       </main>
-
       <footer className="border-t border-slate-200/80 dark:border-slate-800/80 py-8 px-4 text-center text-xs text-slate-500 dark:text-slate-400">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            GhostURL — Ephemeral Link Sharing powered by Go, Gin & Redis TTL
-          </div>
+          <div>GhostURL — Ephemeral Link Sharing powered by Go, Gin & Redis TTL</div>
           <div className="flex items-center gap-4 text-slate-400 dark:text-slate-500">
             <span>Zero Persistent Logs</span>
             <span>•</span>
@@ -39,7 +38,19 @@ export const App: React.FC = () => {
           </div>
         </div>
       </footer>
+
+      {/* Global incoming transfer modal active on baseUrl and all routes */}
+      <IncomingModal transfer={incomingTransfer} onDismiss={clearIncoming} />
     </div>
   );
 };
+
+export const App: React.FC = () => {
+  return (
+    <P2PProvider>
+      <AppContent />
+    </P2PProvider>
+  );
+};
+
 export default App;

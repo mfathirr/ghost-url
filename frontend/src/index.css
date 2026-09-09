@@ -38,3 +38,37 @@
 .ghost-glow-hover:hover {
   box-shadow: 0 0 30px -3px rgba(99, 102, 241, 0.4);
 }
+
+/* Animations for Radar and P2P Incoming Modal */
+@keyframes radarPulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.35;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+.animate-radar-pulse {
+  animation: radarPulse 4s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
