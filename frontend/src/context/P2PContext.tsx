@@ -1,6 +1,6 @@
 import React, { createContext, useContext } from 'react';
 import { useP2P } from '../hooks/useP2P';
-import type { PeerInfo, IncomingTransfer, WSStatus } from '../types/p2p';
+import type { PeerInfo, IncomingTransfer, WSStatus, FileTransferProgress } from '../types/p2p';
 
 export interface P2PContextType {
   roomCode: string;
@@ -12,6 +12,11 @@ export interface P2PContextType {
   incomingTransfer: IncomingTransfer | null;
   clearIncoming: () => void;
   sendToPeer: (peerId: string, content: string) => Promise<boolean>;
+  sendFileToPeer: (peerId: string, file: File) => Promise<boolean>;
+  acceptIncomingFile: () => void;
+  rejectIncomingFile: () => void;
+  outgoingProgress: FileTransferProgress | null;
+  incomingProgress: FileTransferProgress | null;
   reconnect: () => void;
 }
 

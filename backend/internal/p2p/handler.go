@@ -86,9 +86,11 @@ func (h *Handler) ServeWS(c *gin.Context) {
 	clientIP := ExtractClientIP(c.Request)
 
 	// Determine room: if user explicitly provided a room code via query param (?room=...), use it
-	roomID := strings.TrimSpace(c.Query("room"))
-	if roomID != "" {
-		roomID = "room:" + roomID
+	var roomID string
+	rawRoom := strings.TrimSpace(c.Query("room"))
+	if rawRoom != "" {
+		rawRoom = strings.TrimPrefix(rawRoom, "room:")
+		roomID = "room:" + rawRoom
 	} else {
 		roomID = "ip:" + clientIP
 	}
@@ -106,7 +108,7 @@ func (h *Handler) ServeWS(c *gin.Context) {
 		RoomID:     roomID,
 		Hub:        h.hub,
 		Conn:       conn,
-		Send:       make(chan []byte, 256),
+		Send:       make(chan []byte, 1024),
 	}
 
 	h.hub.Register <- client

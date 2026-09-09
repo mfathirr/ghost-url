@@ -11,14 +11,12 @@ import {
   ShieldCheck,
   Download,
   Radio,
-  Laptop,
-  Smartphone,
-  Tablet,
-  Monitor,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useP2PContext } from '../context/P2PContext';
+import { PeerAvatarWithProgress } from '../components/PeerAvatarWithProgress';
 import type { PeerInfo } from '../types/p2p';
+import { copyToClipboard } from '../utils/clipboard';
 
 interface CreatedState {
   slug: string;
@@ -27,22 +25,6 @@ interface CreatedState {
   ttl_seconds: number;
   has_passcode: boolean;
   original_url?: string;
-}
-
-function getDeviceIcon(os: string, deviceType: string) {
-  const lowerOS = (os || '').toLowerCase();
-  const lowerDev = (deviceType || '').toLowerCase();
-
-  if (lowerDev === 'mobile') {
-    return <Smartphone className="w-4 h-4 text-indigo-500" />;
-  }
-  if (lowerDev === 'tablet') {
-    return <Tablet className="w-4 h-4 text-indigo-500" />;
-  }
-  if (lowerOS.includes('windows') || lowerOS.includes('linux')) {
-    return <Monitor className="w-4 h-4 text-indigo-500" />;
-  }
-  return <Laptop className="w-4 h-4 text-indigo-500" />;
 }
 
 export const CreatedPage: React.FC = () => {
@@ -96,12 +78,10 @@ export const CreatedPage: React.FC = () => {
   const visitableShortUrl = `${window.location.origin}/r/${state.slug}`;
 
   const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(visitableShortUrl);
+    const success = await copyToClipboard(visitableShortUrl);
+    if (success) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
-    } catch {
-      // Fallback
     }
   };
 
@@ -363,51 +343,17 @@ export const CreatedPage: React.FC = () => {
 
           {peers.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {peers.map((peer) => {
-                const isSent = !!sentTo[peer.id];
-                const isSending = !!sendingTo[peer.id];
-
-                return (
-                  <button
-                    key={peer.id}
-                    type="button"
-                    onClick={() => handleSendToPeer(peer)}
-                    disabled={isSending}
-                    className={`flex items-center justify-between p-3 rounded-xl border transition-all text-left ${
-                      isSent
-                        ? 'border-emerald-500/50 bg-emerald-50/60 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'
-                        : 'border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/40 hover:border-indigo-400 dark:hover:border-indigo-500/60 hover:bg-slate-100 dark:hover:bg-slate-900/60 text-slate-800 dark:text-slate-200'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center shrink-0 shadow-sm">
-                        {getDeviceIcon(peer.os, peer.deviceType)}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-xs font-semibold truncate">{peer.name}</div>
-                        <div className="text-[10px] text-slate-400 capitalize truncate">
-                          {peer.os} • {peer.deviceType}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="ml-2 shrink-0">
-                      {isSent ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 animate-fade-in">
-                          <Check className="w-3.5 h-3.5" />
-                          <span>✓ Sent to {peer.name}!</span>
-                        </span>
-                      ) : isSending ? (
-                        <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
-                          Send
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
+              {peers.map((peer) => (
+                <PeerAvatarWithProgress
+                  key={peer.id}
+                  peer={peer}
+                  progress={null}
+                  isSent={!!sentTo[peer.id]}
+                  isSending={!!sendingTo[peer.id]}
+                  actionLabel="Send Link"
+                  onClick={() => handleSendToPeer(peer)}
+                />
+              ))}
             </div>
           ) : (
             <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-950/30 text-center">

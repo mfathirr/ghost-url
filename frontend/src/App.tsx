@@ -12,7 +12,13 @@ const RedirectPage = lazy(() => import('./pages/RedirectPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 const AppContent: React.FC = () => {
-  const { incomingTransfer, clearIncoming } = useP2PContext();
+  const {
+    incomingTransfer,
+    clearIncoming,
+    acceptIncomingFile,
+    rejectIncomingFile,
+    incomingProgress,
+  } = useP2PContext();
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 transition-colors">
@@ -29,11 +35,11 @@ const AppContent: React.FC = () => {
       </main>
       <footer className="border-t border-slate-200/80 dark:border-slate-800/80 py-8 px-4 text-center text-xs text-slate-500 dark:text-slate-400">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>GhostURL — Ephemeral Link Sharing powered by Go, Gin & Redis TTL</div>
+          <div>GhostURL — Ephemeral Link Sharing & Zero-Trace P2P Drop</div>
           <div className="flex items-center gap-4 text-slate-400 dark:text-slate-500">
             <span>Zero Persistent Logs</span>
             <span>•</span>
-            <span>Automatic Redis Expiry</span>
+            <span>WebRTC Encrypted P2P</span>
             <span>•</span>
             <span>Bcrypt Protected</span>
           </div>
@@ -41,7 +47,13 @@ const AppContent: React.FC = () => {
       </footer>
 
       {/* Global incoming transfer modal active on baseUrl and all routes */}
-      <IncomingModal transfer={incomingTransfer} onDismiss={clearIncoming} />
+      <IncomingModal
+        transfer={incomingTransfer}
+        onDismiss={clearIncoming}
+        onAcceptFile={acceptIncomingFile}
+        onRejectFile={rejectIncomingFile}
+        incomingProgress={incomingProgress}
+      />
     </div>
   );
 };
