@@ -20,10 +20,11 @@
 
 ## 📖 Overview
 
-**GhostURL** is an account-less, privacy-first web utility combining two core capabilities into a cohesive interface:
+**GhostURL** is an account-less, privacy-first web utility combining three core capabilities into a cohesive interface:
 
 1. **⚡ Quick Bridge (Ephemeral Link Shortener)**: Short links that self-destruct after a specified duration using native Redis hardware/memory TTL eviction. Optionally protect sensitive destinations with salted **bcrypt** passcodes.
 2. **📡 Nearby Radar (AirDrop / Snapdrop P2P Sharing)**: Instant, zero-setup local-network device discovery. Beam links, text, and messages directly between devices over encrypted **WebRTC DataChannels** without ever touching backend databases or persistent storage.
+3. **🚀 GhostDrop (Zero-Storage P2P File Beaming)**: Beam files of arbitrary size (tested up to 1.12+ GB) directly between peer browsers with dual-engine streaming (WebRTC DataChannels + WebSocket signaling relay fallback), adaptive backpressure flow control, and zero server storage.
 
 ---
 
@@ -43,6 +44,14 @@
 - **Fun Peer Monikers**: Generates friendly pseudonyms for each peer (e.g. *"Neon Falcon"*, *"Swift Otter"*, *"Solar Lynx"*).
 - **Encrypted WebRTC DataChannels**: Peer-to-peer data flows directly between browser clients via Google STUN negotiation (`stun:stun.l.google.com:19302`). Data **never** hits backend disks or databases.
 - **Slide-up Beam Modal**: Real-time notifications with one-click **Open Link** and **Copy to Clipboard** actions.
+
+### 🚀 3. GhostDrop (Zero-Storage File Beaming)
+- **Zero Cloud Storage**: Files stream chunk-by-chunk directly between browser memories over WebRTC DataChannels or WebSocket signaling relay fallback. Never written to Redis, disk, or backend databases.
+- **Dual-Engine Streaming**: Automatic fallback from raw binary `RTCDataChannel` (16 KB binary chunks) to Go WebSocket hub relay (16 KB base64 chunks) for guaranteed delivery across restrictive firewalls or isolated mDNS profiles.
+- **Adaptive Backpressure Flow Control**: Monitors buffer thresholds (`bufferedAmount > 128 KB` for DataChannel, `> 64 KB` for WebSocket) to stream large files (tested up to 1.12+ GB) without memory bloat or browser crashes.
+- **Visual Avatar Progress Rings**: `PeerAvatarWithProgress` displays circular SVG progress meters and percentage indicators around peer nodes during active uploads and downloads.
+- **File Offer Handshake**: Recipient previews incoming file name, formatted size, and type with explicit Accept or Decline options before receiving bytes.
+- **Automatic Cleanup**: Assembles `Blob` in receiver memory, prompts download, and revokes ephemeral object URLs after 60 seconds.
 
 ---
 
@@ -77,9 +86,9 @@ flowchart TD
     Router -->|302 Redirect| Visitor
 
     %% P2P Signaling & Mesh
-    PeerA <-->|WebSocket: Signaling| P2P_Hub
-    PeerB <-->|WebSocket: Signaling| P2P_Hub
-    PeerA <===>|WebRTC DataChannel (Direct P2P Link Transfer)| PeerB
+    PeerA <-->|WebSocket: Signaling & Relay Fallback| P2P_Hub
+    PeerB <-->|WebSocket: Signaling & Relay Fallback| P2P_Hub
+    PeerA <===>|WebRTC DataChannel (Direct P2P Link & GhostDrop Streaming)| PeerB
 ```
 
 ### Monorepo Structure
@@ -98,12 +107,13 @@ ghost-url/
 │   └── Dockerfile      # Multi-stage Alpine production image
 ├── frontend/           # React 19 + TypeScript + Vite + Tailwind CSS + Vercel Analytics
 │   ├── src/
-│   │   ├── components/ # IncomingModal, Navbar, ThemeToggle, LoadingSpinner
-│   │   ├── context/    # P2PContext for cross-route WebRTC state
+│   │   ├── components/ # GhostDropZone, PeerAvatarWithProgress, IncomingModal, Navbar
+│   │   ├── context/    # P2PContext for cross-route WebRTC state & file streaming
 │   │   ├── hooks/      # useP2P hook managing WebRTC & WebSocket lifecycle
-│   │   ├── pages/      # CreatePage, CreatedPage (Radar), RedirectPage, 404
+│   │   ├── pages/      # CreatePage (Link & Drop), CreatedPage (Radar), RedirectPage, 404
 │   │   ├── services/   # Typed REST API client
-│   │   └── types/      # TypeScript interfaces
+│   │   ├── types/      # TypeScript interfaces
+│   │   └── utils/      # Clipboard helpers & formatting utilities
 │   ├── nginx.conf      # SPA routing & WebSocket proxy configuration
 │   └── Dockerfile      # Multi-stage Node build -> Nginx image
 └── docker-compose.yml  # Multi-container orchestration (Redis, Go, Nginx)
@@ -236,7 +246,7 @@ Response:
 
 ## 🔒 Security & Privacy
 
-- **Zero Database Retention for P2P**: WebRTC DataChannels transfer data directly between browser engines. URLs, text, and files beamed via radar never touch persistent disks, databases, or log files.
+- **Zero Database Retention for P2P & GhostDrop**: WebRTC DataChannels and WebSocket signaling relay streams transfer data directly between browser engines. URLs, text, and files beamed via radar or GhostDrop never touch persistent disks, databases, or server logs.
 - **Volatile Redis Expiration**: All links use Redis `EXPIRE`. When the TTL elapses, keys are evicted automatically by hardware memory management.
 - **Bcrypt Passcode Hashing**: Link passcodes are salted and hashed with standard bcrypt cost before being stored.
 - **Zero Client IP Logging**: Public IP addresses are processed in-memory solely to isolate local radar rooms and are never written to disk.
