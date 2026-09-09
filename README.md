@@ -2,7 +2,8 @@
 
 # 👻 GhostURL
 
-**Ephemeral, self-destructing short links & zero-persistence peer-to-peer radar transfer.**
+**Private link shortening & zero-storage peer-to-peer file transfer.**  
+*Share links and files that disappear without accounts, traces, or cloud storage.*
 
 [![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev/)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
@@ -49,9 +50,18 @@
 - **Zero Cloud Storage**: Files stream chunk-by-chunk directly between browser memories over WebRTC DataChannels or WebSocket signaling relay fallback. Never written to Redis, disk, or backend databases.
 - **Dual-Engine Streaming**: Automatic fallback from raw binary `RTCDataChannel` (16 KB binary chunks) to Go WebSocket hub relay (16 KB base64 chunks) for guaranteed delivery across restrictive firewalls or isolated mDNS profiles.
 - **Adaptive Backpressure Flow Control**: Monitors buffer thresholds (`bufferedAmount > 128 KB` for DataChannel, `> 64 KB` for WebSocket) to stream large files (tested up to 1.12+ GB) without memory bloat or browser crashes.
+- **iOS Jetsam OOM & Memory Safety**: Batches incoming binary chunks into intermediate Blobs every ~1 MB (64 chunks), eliminating JavaScript heap thrashing and preventing MobileSafari tab reload crashes on large transfers.
+- **Strict FIFO Chunk Sequencing**: Chained promise queue inside `dc.onmessage` guarantees sequential processing of binary and control packets during asynchronous ArrayBuffer conversion.
+- **Native QuickTime & Mobile Media Support**: Automatically infers MIME types (e.g. QuickTime `.mov`, `.mp4`), provides an Apple QuickTime video card fallback on iOS with step-by-step Photos Camera Roll export guidance, and integrates the native Web Share API (`navigator.share`) for 1-tap saving on HTTPS.
 - **Visual Avatar Progress Rings**: `PeerAvatarWithProgress` displays circular SVG progress meters and percentage indicators around peer nodes during active uploads and downloads.
 - **File Offer Handshake**: Recipient previews incoming file name, formatted size, and type with explicit Accept or Decline options before receiving bytes.
 - **Automatic Cleanup**: Assembles `Blob` in receiver memory, prompts download, and revokes ephemeral object URLs after 60 seconds.
+
+### 🔍 4. Search & Generative Engine Optimization (SEO & GEO)
+- **Zero-Dependency React 19 Head Sync**: Native tag hoisting with dynamic fallback synchronization for canonical links, Open Graph, and Twitter Cards.
+- **AI Discoverability (`llms.txt`)**: Machine-readable platform manifest (`/llms.txt`) providing AI agents and generative engines with accurate capability context.
+- **Semantic Schema.org JSON-LD**: Embedded `WebApplication` and `Offer` schemas detailing privacy guarantees, supported protocols, and zero pricing.
+- **Privacy-Guaranteed Indexing Rules**: Strict `noindex, nofollow` headers dynamically applied to ephemeral link confirmations (`/created`), redirect unlock vaults (`/r/:slug`), and error pages, ensuring private transfers and secret links are never indexed or leaked.
 
 ---
 
@@ -106,8 +116,9 @@ ghost-url/
 │   │   └── utils/      # URL validator, slug generator & TTL parser
 │   └── Dockerfile      # Multi-stage Alpine production image
 ├── frontend/           # React 19 + TypeScript + Vite + Tailwind CSS + Vercel Analytics
+│   ├── public/         # Static SEO & crawler assets (robots.txt, sitemap.xml, llms.txt, og-image.svg)
 │   ├── src/
-│   │   ├── components/ # GhostDropZone, PeerAvatarWithProgress, IncomingModal, Navbar
+│   │   ├── components/ # GhostDropZone, PeerAvatarWithProgress, IncomingModal, Navbar, SEO
 │   │   ├── context/    # P2PContext for cross-route WebRTC state & file streaming
 │   │   ├── hooks/      # useP2P hook managing WebRTC & WebSocket lifecycle
 │   │   ├── pages/      # CreatePage (Link & Drop), CreatedPage (Radar), RedirectPage, 404
@@ -250,6 +261,7 @@ Response:
 - **Volatile Redis Expiration**: All links use Redis `EXPIRE`. When the TTL elapses, keys are evicted automatically by hardware memory management.
 - **Bcrypt Passcode Hashing**: Link passcodes are salted and hashed with standard bcrypt cost before being stored.
 - **Zero Client IP Logging**: Public IP addresses are processed in-memory solely to isolate local radar rooms and are never written to disk.
+- **Strict Noindex Privacy Guarantee**: Ephemeral link results and passcode unlock vaults are dynamically marked `noindex, nofollow` to prevent search engine caching.
 - **Privacy-Preserving Telemetry**: Integrated with `@vercel/analytics` in a 100% cookieless and GDPR-compliant mode without recording PII or client IP addresses.
 
 ---
