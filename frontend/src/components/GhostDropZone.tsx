@@ -152,7 +152,7 @@ export const GhostDropZone: React.FC<GhostDropZoneProps> = ({
           </p>
 
           <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-            <span>Direct WebRTC P2P • Never stored on any server</span>
+            <span>Direct device-to-device • Never stored on any server</span>
           </div>
         </div>
       ) : (

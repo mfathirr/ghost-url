@@ -37,7 +37,7 @@ const HOME_JSON_LD = {
       '@id': 'https://www.ghosturl.web.id/#website',
       url: 'https://www.ghosturl.web.id/',
       name: 'GhostURL',
-      description: 'Ephemeral link sharing and zero-storage WebRTC P2P file transfer.',
+      description: 'Share links and files that automatically disappear. No account needed.',
     },
     {
       '@type': 'WebApplication',
@@ -52,11 +52,11 @@ const HOME_JSON_LD = {
         priceCurrency: 'USD',
       },
       featureList: [
-        'Self-destructing short links with Redis hardware TTL auto-eviction',
-        'Optional salted bcrypt passcode protection',
-        'Local-network peer-to-peer device discovery via WebRTC DataChannels',
-        'GhostDrop: Browser-to-browser zero-storage file beaming of arbitrary size',
-        'Zero persistent disk or database retention for transfers',
+        'Links auto-delete after your chosen time — no cleanup needed',
+        'No account or sign-up required',
+        'Optional password protection for your shared link',
+        'Send files directly to nearby devices — nothing is uploaded to the cloud',
+        'No file size limits for device-to-device transfers',
       ],
     },
   ],
@@ -279,7 +279,7 @@ export const CreatePage: React.FC = () => {
           <>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/80 dark:border-indigo-800/80 text-xs font-semibold text-indigo-600 dark:text-indigo-400 mb-4 shadow-sm">
               <Flame className="w-3.5 h-3.5 text-amber-500" />
-              <span>Self-Destructing URL Redirection</span>
+              <span>Self-Destructing Link</span>
             </div>
             <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">
               Links that vanish{' '}
@@ -288,14 +288,14 @@ export const CreatePage: React.FC = () => {
               </span>
             </h1>
             <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-              Share sensitive or temporary links. No accounts, no persistent tracking, and automatic expiration backed by Redis TTL.
+              Share sensitive or temporary links. No account needed — just paste, set a timer, and send.
             </p>
           </>
         ) : (
           <>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800/80 text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-4 shadow-sm">
               <Radio className="w-3.5 h-3.5 text-emerald-500 animate-pulse" />
-              <span>Zero-Storage Browser-to-Browser Beams</span>
+              <span>Zero-Storage File Transfer</span>
             </div>
             <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">
               Files that beam{' '}
@@ -304,7 +304,7 @@ export const CreatePage: React.FC = () => {
               </span>
             </h1>
             <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-              Direct peer-to-peer file transfer over encrypted WebRTC DataChannels. Local-network speed, zero cloud storage, and no file size limits.
+              Send files directly to nearby devices — nothing goes to the cloud.
             </p>
           </>
         )}
@@ -394,7 +394,7 @@ export const CreatePage: React.FC = () => {
                       <option value="d">Days (max 7)</option>
                     </select>
                     <span className="text-xs text-slate-500 dark:text-slate-400 ml-auto">
-                      Max TTL: 7 days
+                      Max lifetime: 7 days
                     </span>
                   </div>
                 )}
@@ -466,7 +466,7 @@ export const CreatePage: React.FC = () => {
                         </button>
                       </div>
                       <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                        If provided, visitors must enter this passcode before being redirected. Secured with bcrypt.
+                        If set, anyone opening your link will need to enter this before being redirected.
                       </p>
                     </div>
                   </div>
@@ -645,28 +645,28 @@ export const CreatePage: React.FC = () => {
             <>
               <div className="p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/40">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-1">
-                  Hard TTL Expiration
+                  Auto-Deletes On Time
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-400">
-                  Keys are purged directly by Redis memory management when TTL expires.
+                  Your link disappears automatically when the timer runs out. No action needed.
                 </p>
               </div>
 
               <div className="p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/40">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">
-                  Account-less Privacy
+                  No Account, No Trace
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-400">
-                  No signup, cookies, or user tracking. Ephemeral by design.
+                  No sign-up, no cookies, no tracking. Share privately by default.
                 </p>
               </div>
 
               <div className="p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/40">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400 mb-1">
-                  Bcrypt Protection
+                  Password Lock
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-400">
-                  Passcodes are hashed with bcrypt before storing. Plaintext is never saved.
+                  Protect your link with a password. Only people who know it can open it.
                 </p>
               </div>
             </>
@@ -678,7 +678,7 @@ export const CreatePage: React.FC = () => {
                   <span>Zero Server Storage</span>
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-400">
-                  Data travels directly device-to-device via WebRTC. Never saved on servers or databases.
+                  Data travels directly device-to-device. Never saved on servers or databases.
                 </p>
               </div>
 

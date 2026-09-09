@@ -337,7 +337,7 @@ export const CreatedPage: React.FC = () => {
           </div>
 
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-            Directly beam this ghost link to other devices on your local network using WebRTC P2P. Click any peer to send instantly.
+            Directly beam this ghost link to nearby devices. Click any device below to send instantly.
           </p>
 
           {/* Sent feedback banner */}
@@ -368,7 +368,7 @@ export const CreatedPage: React.FC = () => {
                 {wsStatus === 'connected'
                   ? "No nearby devices detected on your local network. Open GhostURL on another device or tab to share."
                   : wsStatus === 'connecting'
-                  ? "Connecting to local P2P signaling network..."
+                  ? "Connecting to nearby device network..."
                   : "Radar is offline. Ensure VITE_WS_URL or VITE_API_BASE_URL is set in Vercel project settings and redeployed."}
               </p>
             </div>

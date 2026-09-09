@@ -210,7 +210,7 @@ export const RedirectPage: React.FC = () => {
         <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800/80 text-center">
           <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Encrypted with bcrypt verification</span>
+            <span>Encrypted with end-to-end verification</span>
           </div>
         </div>
       </div>

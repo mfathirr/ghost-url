@@ -49,9 +49,9 @@ const AppContent: React.FC = () => {
           <div className="flex items-center gap-4 text-slate-400 dark:text-slate-500">
             <span>Zero Persistent Logs</span>
             <span>•</span>
-            <span>WebRTC Encrypted P2P</span>
+            <span>Encrypted Direct Transfer</span>
             <span>•</span>
-            <span>Bcrypt Protected</span>
+            <span>Passcode Protected</span>
           </div>
         </div>
       </footer>

@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
 
 export const DEFAULT_SITE_NAME = 'GhostURL';
-export const DEFAULT_TITLE = 'GhostURL — Ephemeral Link Sharing & P2P File Beaming';
+export const DEFAULT_TITLE = 'GhostURL — Share links and files that disappear.';
 export const DEFAULT_DESCRIPTION =
-  'GhostURL is a privacy-first, account-less platform for self-destructing short links with Redis TTL auto-eviction and zero-storage WebRTC peer-to-peer file beaming.';
+  "GhostURL lets you share links and files that automatically disappear. No account needed. Nothing stored. Just share and it's gone.";
 export const DEFAULT_CANONICAL = 'https://www.ghosturl.web.id/';
 export const DEFAULT_OG_IMAGE = 'https://www.ghosturl.web.id/og-image.svg';
 
