@@ -8,7 +8,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Geist', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['Geist Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       colors: {
         ghost: {
@@ -20,14 +21,14 @@ export default {
           500: '#64748b',
           600: '#475569',
           700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-          950: '#020617',
+          800: '#1a2230',
+          900: '#0f141c',
+          950: '#090d12',
         },
         accent: {
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
+          400: '#34d399',
+          500: '#10b981',
+          600: '#059669',
         }
       },
       animation: {

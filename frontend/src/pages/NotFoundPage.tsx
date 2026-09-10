@@ -11,25 +11,26 @@ export const NotFoundPage: React.FC = () => {
         description="The page you are looking for has vanished or does not exist."
         noIndex={true}
       />
-      <div className="w-20 h-20 mx-auto rounded-3xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 flex items-center justify-center text-slate-400 mb-6 shadow-inner">
-        <Ghost className="w-10 h-10 animate-pulse" />
+      <div className="w-16 h-16 mx-auto rounded-2xl bg-slate-100 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 flex items-center justify-center text-slate-400 mb-5 shadow-sm">
+        <Ghost className="w-8 h-8 animate-pulse text-emerald-500" />
       </div>
-      <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">
+      <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white font-mono">
         404 - Page Not Found
       </h1>
-      <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
-        The page you are looking for has vanished or does not exist.
+      <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-sm mx-auto">
+        The route you are looking for has vanished, self-destructed, or does not exist.
       </p>
-      <div className="mt-8">
+      <div className="mt-6">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-500/20 transition-all"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-mono font-bold text-xs uppercase tracking-wider bg-emerald-500 hover:bg-emerald-400 text-black shadow-sm transition-all active:-translate-y-[1px]"
         >
-          <Home className="w-4 h-4" />
-          <span>Return Home</span>
+          <Home className="w-3.5 h-3.5" />
+          <span>Return to Console</span>
         </Link>
       </div>
     </div>
   );
 };
+
 export default NotFoundPage;

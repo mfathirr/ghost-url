@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 
 export const DEFAULT_SITE_NAME = 'GhostURL';
-export const DEFAULT_TITLE = 'GhostURL — Self-Destructing Links, Encrypted Notes & P2P File Beaming';
+export const DEFAULT_TITLE = 'GhostURL | Self-Destructing Links, Encrypted Notes & P2P File Beaming';
 export const DEFAULT_DESCRIPTION =
   "Share self-destructing links, end-to-end encrypted secret notes, and direct P2P files that disappear forever. No account needed, zero logs, nothing stored.";
 export const DEFAULT_KEYWORDS =
@@ -30,7 +30,7 @@ export const SEO: React.FC<SEOProps> = ({
   noIndex = false,
   jsonLd,
 }) => {
-  const fullTitle = title ? `${title} — ${DEFAULT_SITE_NAME}` : DEFAULT_TITLE;
+  const fullTitle = title ? `${title} | ${DEFAULT_SITE_NAME}` : DEFAULT_TITLE;
   const canonicalUrl = canonical || (noIndex ? '' : DEFAULT_CANONICAL);
 
   useEffect(() => {

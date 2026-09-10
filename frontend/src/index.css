@@ -9,14 +9,16 @@
     --color-border: #e2e8f0;
     --color-text-main: #0f172a;
     --color-text-muted: #64748b;
+    --color-accent: #10b981;
   }
 
   .dark {
-    --color-bg: #090d16;
-    --color-surface: #111827;
-    --color-border: #1f293d;
+    --color-bg: #090d12;
+    --color-surface: #0f141c;
+    --color-border: #1a2230;
     --color-text-main: #f8fafc;
-    --color-text-muted: #94a3b8;
+    --color-text-muted: #8b9bb4;
+    --color-accent: #10b981;
   }
 
   body {
@@ -25,28 +27,34 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    min-height: 100vh;
+    min-height: 100dvh;
     transition: background-color 0.2s ease, color 0.2s ease;
   }
 }
 
-/* Custom glow utility for ghost theme */
-.ghost-glow {
-  box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.25);
+/* Tactile hardware & stealth utilities */
+.stealth-card {
+  position: relative;
+  isolation: isolate;
+  background-color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
 }
 
-.ghost-glow-hover:hover {
-  box-shadow: 0 0 30px -3px rgba(99, 102, 241, 0.4);
+.dark .stealth-card {
+  background-color: rgba(15, 20, 28, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 12px 36px -4px rgba(0, 0, 0, 0.5);
 }
 
-/* Animations for Radar and P2P Incoming Modal */
-@keyframes radarPulse {
+/* Clean tactical radar ping */
+@keyframes radarSweep {
   0% {
-    transform: scale(0.6);
+    transform: scale(0.7);
     opacity: 0.8;
   }
   50% {
-    opacity: 0.35;
+    opacity: 0.3;
   }
   100% {
     transform: scale(2.2);
@@ -54,21 +62,15 @@
   }
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translate(-50%, 20px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0) scale(1);
-  }
+.animate-radar-sweep {
+  animation: radarSweep 3.5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }
 
-.animate-radar-pulse {
-  animation: radarPulse 4s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
-}
-
-.animate-slide-up {
-  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+@media (prefers-reduced-motion: reduce) {
+  .animate-radar-sweep,
+  .animate-radar-pulse,
+  .animate-fade-in {
+    animation: none !important;
+    transition: none !important;
+  }
 }

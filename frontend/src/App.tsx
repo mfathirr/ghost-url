@@ -21,7 +21,7 @@ const AppContent: React.FC = () => {
   } = useP2PContext();
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="min-h-[100dvh] flex flex-col bg-slate-50 dark:bg-[#090d12] text-slate-900 dark:text-slate-100 transition-colors font-sans">
       <Navbar />
       <main className="flex-1">
         <Suspense fallback={<LoadingSpinner message="Loading view..." />}>
@@ -33,20 +33,20 @@ const AppContent: React.FC = () => {
           </Routes>
         </Suspense>
       </main>
-      <footer className="border-t border-slate-200/80 dark:border-slate-800/80 py-8 px-4 text-center text-xs text-slate-500 dark:text-slate-400">
+      <footer className="border-t border-slate-200/80 dark:border-white/5 py-8 px-4 text-center text-xs text-slate-500 dark:text-slate-400">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            GhostURL — Ephemeral Link Sharing &amp; Zero-Storage P2P Beaming •{' '}
+            GhostURL | Ephemeral Link Sharing &amp; Zero-Storage P2P Beaming •{' '}
             <a
               href="https://github.com/mfathirr/ghost-url"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-indigo-600 dark:hover:text-indigo-400 underline underline-offset-2 transition-colors"
+              className="hover:text-emerald-500 dark:hover:text-emerald-400 underline underline-offset-2 transition-colors"
             >
               Open Source (MIT)
             </a>
           </div>
-          <div className="flex items-center gap-4 text-slate-400 dark:text-slate-500">
+          <div className="flex items-center gap-4 text-slate-400 dark:text-slate-500 font-mono text-[11px]">
             <span>Zero Persistent Logs</span>
             <span>•</span>
             <span>Encrypted Direct Transfer</span>

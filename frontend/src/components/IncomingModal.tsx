@@ -41,7 +41,7 @@ function getFileTypeIcon(type: string, name: string) {
     return <FileArchive className="w-8 h-8 text-emerald-500" />;
   }
   if (lowerType.includes('text') || lowerType.includes('pdf') || /\.(pdf|txt|md|doc|docx)$/i.test(lowerName)) {
-    return <FileText className="w-8 h-8 text-indigo-500" />;
+    return <FileText className="w-8 h-8 text-emerald-500" />;
   }
   return <LucideFile className="w-8 h-8 text-slate-400" />;
 }
@@ -146,12 +146,12 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
   };
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-lg px-4 animate-slide-up">
-      <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-2xl relative overflow-hidden">
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-lg px-4 animate-slide-up font-sans">
+      <div className="stealth-card rounded-2xl p-5 sm:p-6 border border-slate-200/90 dark:border-white/10 shadow-2xl relative overflow-hidden">
         {/* Ambient top highlight */}
         <div
           className={`absolute -top-10 left-1/2 -translate-x-1/2 w-48 h-10 blur-2xl rounded-full pointer-events-none ${
-            isCompleted ? 'bg-emerald-500/20' : 'bg-indigo-500/20'
+            isCompleted ? 'bg-emerald-500/20' : 'bg-emerald-500/10'
           }`}
         />
 
@@ -161,13 +161,13 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
               className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 shadow-sm ${
                 isCompleted
                   ? 'bg-emerald-50 dark:bg-emerald-950/70 border-emerald-200 dark:border-emerald-800/70 text-emerald-600 dark:text-emerald-400'
-                  : 'bg-indigo-50 dark:bg-indigo-950/70 border-indigo-200 dark:border-indigo-800/70 text-indigo-600 dark:text-indigo-400'
+                  : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500'
               }`}
             >
               {isCompleted ? (
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
               ) : isFileOffer ? (
-                <Download className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                <Download className="w-5 h-5 text-emerald-500" />
               ) : isLink ? (
                 <Globe className="w-5 h-5" />
               ) : (
@@ -176,13 +176,7 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span
-                  className={`text-xs font-semibold uppercase tracking-wider ${
-                    isCompleted
-                      ? 'text-emerald-600 dark:text-emerald-400'
-                      : 'text-indigo-600 dark:text-indigo-400'
-                  }`}
-                >
+                <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                   {isCompleted
                     ? 'Transfer Complete'
                     : isFileOffer
@@ -196,7 +190,7 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
                 />
               </div>
               <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                <span className={isCompleted ? 'text-emerald-600 dark:text-emerald-400' : 'text-indigo-600 dark:text-indigo-400'}>
+                <span className="text-emerald-600 dark:text-emerald-400">
                   {transfer.senderName}
                 </span>{' '}
                 {isCompleted
@@ -321,7 +315,7 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
                             Tap <strong>&ldquo;Save File&rdquo;</strong> below to download to the Files app.
                           </li>
                           <li>
-                            In the <strong>Files</strong> app, open Downloads, tap <span className="font-mono text-indigo-600 dark:text-indigo-400">{fileName}</span>, and tap the <strong>Share</strong> icon (bottom-left).
+                            In the <strong>Files</strong> app, open Downloads, tap <span className="font-mono text-emerald-600 dark:text-emerald-400">{fileName}</span>, and tap the <strong>Share</strong> icon (bottom-left).
                           </li>
                           <li>
                             Tap <strong className="text-emerald-600 dark:text-emerald-400">&ldquo;Save Video&rdquo;</strong> to add it directly to your <strong>Photos Camera Roll</strong> where it plays natively with sound!
@@ -352,7 +346,7 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
                   {transfer.fileOffer.fileName}
                 </div>
                 <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">
-                  <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">
                     {formatBytes(transfer.fileOffer.fileSize)}
                   </span>
                   <span>•</span>
@@ -363,24 +357,20 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
 
             {/* In-progress streaming bar */}
             {isTransferring && incomingProgress && (
-              <div className="p-3.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-900/60 space-y-2 animate-fade-in">
-                <div className="flex items-center justify-between text-xs font-semibold">
-                  <span className="flex items-center gap-2 text-indigo-700 dark:text-indigo-300">
+              <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 space-y-2 animate-fade-in">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300 font-mono">
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>
-                      {incomingProgress.chunksTransferred === 0
-                        ? 'Preparing transfer...'
-                        : `Streaming direct (${formatBytes(Math.min(incomingProgress.fileSize, Math.round((incomingProgress.chunksTransferred / (incomingProgress.totalChunks || 1)) * incomingProgress.fileSize)))} / ${formatBytes(incomingProgress.fileSize)})`}
-                    </span>
+                    Streaming directly into browser memory...
                   </span>
-                  <span className="font-mono text-indigo-600 dark:text-indigo-400">
+                  <span className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
                     {incomingProgress.percentage}%
                   </span>
                 </div>
-                <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                <div className="w-full bg-slate-200 dark:bg-zinc-800 rounded-full h-1.5 overflow-hidden">
                   <div
-                    className="bg-indigo-600 h-full rounded-full transition-all duration-200"
-                    style={{ width: `${Math.max(2, incomingProgress.percentage)}%` }}
+                    className="bg-emerald-500 h-full rounded-full transition-all duration-200"
+                    style={{ width: `${incomingProgress.percentage}%` }}
                   />
                 </div>
               </div>
@@ -388,7 +378,7 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
           </div>
         ) : (
           <div className="bg-slate-50 dark:bg-slate-950/70 rounded-xl p-4 border border-slate-200 dark:border-slate-800 mb-5 break-all max-h-36 overflow-y-auto">
-            <p className="text-sm font-mono text-slate-800 dark:text-indigo-300 select-all">
+            <p className="text-sm font-mono text-slate-800 dark:text-emerald-300 select-all">
               {transfer.content}
             </p>
           </div>
@@ -433,21 +423,21 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
                 <button
                   type="button"
                   onClick={onAcceptFile}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-md shadow-indigo-500/20 transition-all duration-200 active:scale-95"
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-mono font-bold text-xs uppercase tracking-wider bg-emerald-500 hover:bg-emerald-400 text-black shadow-sm transition-all duration-200 active:-translate-y-[1px]"
                 >
                   <Download className="w-4 h-4" />
-                  <span>Accept & Download</span>
+                  <span>Accept &amp; Download</span>
                 </button>
                 <button
                   type="button"
                   onClick={handleDecline}
-                  className="py-3 px-4 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors"
+                  className="py-2.5 px-4 rounded-lg text-xs font-mono font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
                 >
                   Decline
                 </button>
               </>
             ) : (
-              <div className="w-full text-center py-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 font-mono">
+              <div className="w-full text-center py-2 text-xs font-semibold text-emerald-500 font-mono">
                 Downloading directly into browser memory...
               </div>
             )
@@ -457,10 +447,10 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
                 <button
                   type="button"
                   onClick={handleOpen}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-md shadow-indigo-500/20 transition-all duration-200 active:scale-95"
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-mono font-bold text-xs uppercase tracking-wider bg-emerald-500 hover:bg-emerald-400 text-black shadow-sm transition-all duration-200 active:-translate-y-[1px]"
                 >
                   <ArrowUpRight className="w-4 h-4" />
-                  <span>Accept & Open</span>
+                  <span>Accept &amp; Open</span>
                 </button>
               )}
 

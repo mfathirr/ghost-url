@@ -74,7 +74,6 @@ export const RedirectPage: React.FC = () => {
     } else {
       // Destination URL
       if (isBurned) {
-        // Dramatic self-destruct countdown before proceeding
         setDestinationUrl(finalPayload);
         setBurned(true);
       } else {
@@ -174,22 +173,22 @@ export const RedirectPage: React.FC = () => {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center animate-fade-in">
         <SEO title="Unlock Key Missing" description="Secret key missing from link." noIndex={true} />
-        <div className="w-16 h-16 mx-auto rounded-3xl bg-amber-50 dark:bg-amber-950/80 border border-amber-200 dark:border-amber-800/80 flex items-center justify-center text-amber-500 mb-6 shadow-md shadow-amber-500/10">
-          <KeyRound className="w-8 h-8" />
+        <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 mb-5">
+          <KeyRound className="w-7 h-7" />
         </div>
-        <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">
+        <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">
           Unlock Key Missing
         </h1>
-        <p className="mt-3 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+        <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-mono">
           {cryptoError}
         </p>
-        <div className="mt-8">
+        <div className="mt-6">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-500/20 transition-all"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg font-mono font-bold text-xs uppercase tracking-wider bg-emerald-500 hover:bg-emerald-400 text-black transition-all"
           >
-            <span>Go to GhostURL</span>
-            <ArrowRight className="w-4 h-4" />
+            <span>Return to Console</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
       </div>
@@ -205,22 +204,22 @@ export const RedirectPage: React.FC = () => {
           description="This private link has expired or does not exist."
           noIndex={true}
         />
-        <div className="w-20 h-20 mx-auto rounded-3xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 flex items-center justify-center text-slate-400 mb-6 shadow-inner">
-          <Ghost className="w-10 h-10 animate-pulse" />
+        <div className="w-16 h-16 mx-auto rounded-2xl bg-slate-100 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 flex items-center justify-center text-slate-400 mb-5 shadow-sm">
+          <Ghost className="w-8 h-8 animate-pulse" />
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
           Link Vanished
         </h1>
-        <p className="mt-3 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-          This link has either expired, self-destructed upon reading, or never existed. All records have been permanently wiped from memory.
+        <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-w-sm mx-auto">
+          This link has either reached its auto-eviction timer, self-destructed upon reading, or never existed. All records have been permanently cleared from memory.
         </p>
-        <div className="mt-8">
+        <div className="mt-6">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-500/20 transition-all"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg font-mono font-bold text-xs uppercase tracking-wider bg-emerald-500 hover:bg-emerald-400 text-black transition-all"
           >
-            <span>Create a New Link</span>
-            <ArrowRight className="w-4 h-4" />
+            <span>Create New Link</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
       </div>
@@ -230,7 +229,7 @@ export const RedirectPage: React.FC = () => {
   // Secret Note Display View
   if (noteContent !== null) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-12 sm:py-16">
+      <div className="max-w-3xl mx-auto px-4 py-10 sm:py-16">
         <SEO title="Secret Note" description="View private secret note." noIndex={true} />
         <SecretNoteViewer
           content={noteContent}
@@ -242,48 +241,48 @@ export const RedirectPage: React.FC = () => {
     );
   }
 
-  // Dramatic Mission: Impossible Self-Destruct Countdown for Burned URLs
+  // Mission: Impossible Self-Destruct Countdown for Burned URLs
   if (burned && destinationUrl) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 animate-fade-in text-center">
         <SEO title="Link Destroyed" description="This link has self-destructed." noIndex={true} />
-        <div className="bg-gradient-to-b from-rose-950/90 to-slate-950/90 border border-rose-500/40 rounded-3xl p-8 shadow-2xl shadow-rose-950/60 backdrop-blur-xl text-white space-y-6">
-          <div className="w-20 h-20 mx-auto rounded-3xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 shadow-inner">
-            <Flame className="w-10 h-10 animate-bounce" />
+        <div className="stealth-card rounded-2xl p-6 sm:p-8 border border-rose-500/40 text-white space-y-5 bg-rose-950/70">
+          <div className="w-14 h-14 mx-auto rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 shadow-inner">
+            <Flame className="w-7 h-7 animate-bounce" />
           </div>
 
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/20 border border-rose-400/30 text-xs font-bold uppercase tracking-wider text-rose-300 mb-3">
-              <span>Self-Destruct Activated</span>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-rose-500/20 border border-rose-400/30 text-[10px] font-mono font-bold uppercase tracking-wider text-rose-300 mb-2">
+              <span>Self-Destruct Triggered</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
               Link Destroyed Forever
             </h1>
-            <p className="mt-2 text-xs sm:text-sm text-rose-200/80 leading-relaxed">
-              This link was set to <span className="font-bold text-white">self-destruct after opening</span>. It has been permanently deleted from our system and cannot be opened again.
+            <p className="mt-1.5 text-xs text-rose-200/80 leading-relaxed">
+              This link was set to <span className="font-bold text-white">burn on read</span>. It has been permanently purged from memory and cannot be accessed again.
             </p>
           </div>
 
-          {/* Countdown Ring / Display */}
-          <div className="py-4">
-            <div className="text-5xl font-black font-mono tracking-wider text-rose-400 animate-pulse">
+          {/* Countdown Display */}
+          <div className="py-2">
+            <div className="text-4xl sm:text-5xl font-black font-mono tracking-wider text-rose-400 animate-pulse">
               {burnCountdown}
             </div>
-            <p className="text-xs text-rose-300/70 mt-1 uppercase font-semibold tracking-wider">
-              Seconds until redirect
+            <p className="text-[10px] text-rose-300/70 mt-1 uppercase font-mono tracking-wider">
+              Seconds until automated redirect
             </p>
           </div>
 
-          <div className="space-y-3 pt-2">
+          <div className="space-y-2.5 pt-1">
             <a
               href={destinationUrl}
-              className="w-full py-3.5 px-5 rounded-xl font-bold text-sm bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white shadow-lg shadow-rose-600/30 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 rounded-lg font-mono font-bold text-xs uppercase tracking-wider bg-emerald-500 hover:bg-emerald-400 text-black transition-all flex items-center justify-center gap-2 active:-translate-y-[1px]"
             >
-              <span>Open Destination Now</span>
-              <ExternalLink className="w-4 h-4" />
+              <span>Open Target Destination</span>
+              <ExternalLink className="w-3.5 h-3.5" />
             </a>
-            <div className="text-[11px] text-slate-400">
-              Destination: <code className="font-mono text-slate-300 break-all">{destinationUrl}</code>
+            <div className="text-[10px] font-mono text-slate-400 truncate">
+              Target: <code className="text-slate-300">{destinationUrl}</code>
             </div>
           </div>
         </div>
@@ -299,45 +298,45 @@ export const RedirectPage: React.FC = () => {
         description="Enter password to unlock this private link."
         noIndex={true}
       />
-      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800/90 rounded-2xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 dark:shadow-none">
+      <div className="stealth-card rounded-2xl p-6 sm:p-8 border border-slate-200/90 dark:border-white/10">
         {/* Header */}
-        <div className="text-center mb-6">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800/70 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-3 shadow-md shadow-indigo-500/10">
-            <Lock className="w-7 h-7" />
+        <div className="text-center mb-5">
+          <div className="w-12 h-12 mx-auto rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-500 mb-3 shadow-sm">
+            <Lock className="w-6 h-6" />
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-            Password Protected
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Passcode Protected
           </h1>
-          <p className="mt-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Enter the password to unlock this {fragmentType === 'note' ? 'secret note' : 'link'}.
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Enter the secret passcode to unlock this {fragmentType === 'note' ? 'secret note' : 'link'}.
           </p>
         </div>
 
         {/* Expiry and Burn Notice */}
-        <div className="space-y-2 mb-6">
-          <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-slate-800/80 flex items-center justify-center gap-2 text-xs text-slate-600 dark:text-slate-400 font-mono">
+        <div className="space-y-2 mb-5">
+          <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-black/40 border border-slate-200/80 dark:border-zinc-800 flex items-center justify-center gap-2 text-[11px] text-slate-600 dark:text-slate-400 font-mono">
             <Clock className="w-3.5 h-3.5 text-amber-500" />
             <span>Expires: {new Date(metadata.expires_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
           </div>
 
           {metadata.views_remaining !== null && (
-            <div className={`p-2.5 rounded-xl border flex items-center justify-center gap-2 text-xs font-semibold ${
+            <div className={`p-2.5 rounded-lg border flex items-center justify-center gap-2 text-[11px] font-mono font-semibold ${
               metadata.views_remaining === 1
-                ? 'bg-rose-50 dark:bg-rose-950/50 border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300'
-                : 'bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-900/60 text-amber-700 dark:text-amber-300'
+                ? 'bg-rose-500/10 border-rose-500/30 text-rose-700 dark:text-rose-300'
+                : 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300'
             }`}>
               <Flame className="w-3.5 h-3.5 text-rose-500" />
               <span>
                 {metadata.views_remaining === 1
-                  ? '⚠️ Single-use link: Self-destructs upon unlocking'
-                  : `🔥 ${metadata.views_remaining} opens remaining before self-destructing`}
+                  ? 'Single-use link: Destroys upon unlocking'
+                  : `${metadata.views_remaining} view(s) remaining before destruction`}
               </span>
             </div>
           )}
         </div>
 
         {errorMessage && (
-          <div className="mb-5 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 flex items-start gap-2.5 text-rose-700 dark:text-rose-300 text-xs sm:text-sm animate-fade-in">
+          <div className="mb-4 p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 flex items-start gap-2 text-rose-700 dark:text-rose-300 text-xs animate-fade-in font-mono">
             <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
             <div>{errorMessage}</div>
           </div>
@@ -345,8 +344,8 @@ export const RedirectPage: React.FC = () => {
 
         <form onSubmit={handleUnlock} className="space-y-4">
           <div>
-            <label htmlFor="passcode-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Password
+            <label htmlFor="passcode-input" className="block text-xs font-mono uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-semibold">
+              Passcode
             </label>
             <div className="relative">
               <input
@@ -357,14 +356,14 @@ export const RedirectPage: React.FC = () => {
                 value={passcode}
                 onChange={(e) => setPasscode(e.target.value)}
                 placeholder="Enter password..."
-                className="w-full pl-3.5 pr-10 py-3 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-950/60 text-slate-900 dark:text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                className="w-full pl-3.5 pr-10 py-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-black/60 text-slate-900 dark:text-white text-xs font-mono placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
               <button
                 type="button"
                 onClick={() => setShowPasscode(!showPasscode)}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
-                {showPasscode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPasscode ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
             </div>
           </div>
@@ -372,26 +371,26 @@ export const RedirectPage: React.FC = () => {
           <button
             type="submit"
             disabled={unlocking || !passcode.trim()}
-            className="w-full py-3.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-indigo-500/25 transition-all flex items-center justify-center gap-2"
+            className="w-full py-2.5 rounded-lg font-mono font-bold text-xs uppercase tracking-wider text-black bg-emerald-500 hover:bg-emerald-400 active:-translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all flex items-center justify-center gap-2"
           >
             {unlocking ? (
               <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-3.5 h-3.5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
                 <span>Unlocking...</span>
               </>
             ) : (
               <>
                 <span>Unlock {fragmentType === 'note' ? 'Secret Note' : 'Link'}</span>
-                <ExternalLink className="w-4 h-4" />
+                <ExternalLink className="w-3.5 h-3.5" />
               </>
             )}
           </button>
         </form>
 
-        <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800/80 text-center">
-          <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+        <div className="mt-5 pt-4 border-t border-slate-200/70 dark:border-zinc-800 text-center">
+          <div className="flex items-center justify-center gap-1.5 text-[10px] font-mono text-slate-500 dark:text-slate-400">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Private, encrypted, and automatically destroyed</span>
+            <span>Encrypted transmission: Ephemeral memory retention</span>
           </div>
         </div>
       </div>
@@ -400,4 +399,3 @@ export const RedirectPage: React.FC = () => {
 };
 
 export default RedirectPage;
-

@@ -28,12 +28,12 @@ export const ThemeToggle: React.FC = () => {
     <button
       onClick={() => setIsDark(!isDark)}
       aria-label="Toggle theme"
-      className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all shadow-sm"
+      className="p-2 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/70 backdrop-blur text-slate-600 dark:text-slate-300 hover:text-emerald-500 dark:hover:text-emerald-400 hover:border-emerald-500/40 dark:hover:border-emerald-500/40 transition-all shadow-sm"
     >
       {isDark ? (
-        <Sun className="w-5 h-5 transition-transform hover:rotate-45" />
+        <Sun className="w-4 h-4 transition-transform hover:rotate-45" />
       ) : (
-        <Moon className="w-5 h-5 transition-transform hover:-rotate-12" />
+        <Moon className="w-4 h-4 transition-transform hover:-rotate-12" />
       )}
     </button>
   );

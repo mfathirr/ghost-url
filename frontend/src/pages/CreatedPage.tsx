@@ -161,55 +161,55 @@ export const CreatedPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-12 sm:py-16 animate-fade-in">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10 sm:py-16 animate-fade-in">
       <SEO
         title={state.content_type === 'note' ? 'Secret Note Created' : 'Disappearing Link Created'}
         description="Your private link is ready to share. It will automatically self-destruct once expired or read."
         noIndex={true}
       />
 
-      {/* Success Badge */}
+      {/* Success Readout */}
       <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 text-emerald-600 dark:text-emerald-400 mb-4 shadow-lg shadow-emerald-500/10">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 mb-3 shadow-sm">
           {state.content_type === 'note' ? (
-            <FileText className="w-8 h-8 text-amber-500" />
+            <FileText className="w-6 h-6" />
           ) : (
-            <ShieldCheck className="w-8 h-8" />
+            <ShieldCheck className="w-6 h-6" />
           )}
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
-          {state.content_type === 'note' ? 'Secret Note is Ready' : 'Disappearing Link is Ready'}
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+          {state.content_type === 'note' ? 'Secret Note Sealed' : 'Ephemeral Link Generated'}
         </h1>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+        <p className="mt-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto">
           {state.content_type === 'note'
-            ? 'Share this encrypted secret note. It unlocks only in your recipient’s browser.'
-            : 'Share this private link. It will automatically self-destruct once expired or viewed.'}
+            ? 'Encrypted in your browser. The decryption key exists only in this link.'
+            : 'Configured for automatic hardware eviction. Zero persistent disk records.'}
         </p>
       </div>
 
       {/* Main Result Card */}
-      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800/90 rounded-2xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 dark:shadow-none space-y-6">
+      <div className="stealth-card rounded-2xl p-5 sm:p-7 border border-slate-200/90 dark:border-white/10 space-y-5">
         {/* Security & Feature Badges */}
         {(state.fragment_key || (state.max_views && state.max_views > 0)) && (
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             {state.fragment_key && (
-              <div className="p-3.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200/90 dark:border-indigo-800/70 flex items-start gap-3 text-xs text-indigo-900 dark:text-indigo-200">
-                <Lock className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/25 flex items-start gap-2.5 text-xs font-mono text-emerald-700 dark:text-emerald-300">
+                <Lock className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-bold">End-to-End Encrypted: </span>
-                  The secret key is included in your link and never touches our servers. Only someone with the complete link can view it.
+                  <span className="font-bold">E2EE ACTIVE: </span>
+                  Decryption key stored in URL fragment (#k=). Server remains completely blind to plaintext.
                 </div>
               </div>
             )}
             {state.max_views && state.max_views > 0 && (
-              <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200/90 dark:border-rose-800/70 flex items-start gap-3 text-xs text-rose-900 dark:text-rose-200">
-                <Flame className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/25 flex items-start gap-2.5 text-xs font-mono text-rose-700 dark:text-rose-300">
+                <Flame className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
                 <div>
                   <span className="font-bold">
-                    {state.max_views === 1 ? 'Self-Destruct Active: ' : `Self-Destruct Limit (${state.max_views} Views): `}
+                    {state.max_views === 1 ? 'BURN-ON-READ ACTIVE: ' : `VIEW LIMIT (${state.max_views} VIEWS): `}
                   </span>
                   {state.max_views === 1
-                    ? 'This link will disappear forever the moment it is opened.'
+                    ? 'This link will permanently self-destruct the instant it is unlocked.'
                     : `This link will automatically self-destruct after ${state.max_views} view(s).`}
                 </div>
               </div>
@@ -219,158 +219,148 @@ export const CreatedPage: React.FC = () => {
 
         {/* Short URL Copy Box */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+          <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5 font-semibold">
             Your Private {state.content_type === 'note' ? 'Secret Note' : 'Short'} Link
           </label>
           <div className="flex items-center gap-2">
-            <div className="flex-1 px-4 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/70 text-slate-900 dark:text-indigo-300 font-mono text-sm sm:text-base font-semibold truncate select-all">
+            <div className="flex-1 px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-black/60 text-slate-900 dark:text-emerald-300 font-mono text-xs sm:text-sm font-semibold truncate select-all">
               {visitableShortUrl}
             </div>
             <button
               onClick={handleCopy}
-              className={`px-5 py-3.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 flex-shrink-0 ${
+              className={`px-4 py-2.5 rounded-lg font-mono font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 flex-shrink-0 active:-translate-y-[1px] ${
                 copied
-                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20'
-                  : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-500/20 active:scale-95'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-emerald-500 hover:bg-emerald-400 text-black shadow-sm'
               }`}
             >
               {copied ? (
                 <>
-                  <Check className="w-4 h-4" />
-                  <span>Copied!</span>
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Copied</span>
                 </>
               ) : (
                 <>
-                  <Copy className="w-4 h-4" />
-                  <span>Copy</span>
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Copy Link</span>
                 </>
               )}
             </button>
           </div>
         </div>
 
-        {/* Expiry & Status Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+        {/* Expiry & Status Badges */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
           {/* Expiration Timer */}
-          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/70 border border-amber-200 dark:border-amber-800/70 flex items-center justify-center text-amber-600 dark:text-amber-400 flex-shrink-0">
-              <Clock className="w-5 h-5" />
+          <div className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/60 dark:bg-zinc-900/50 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-500 flex-shrink-0">
+              <Clock className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Expires In</div>
-              <div className="text-sm font-bold text-slate-900 dark:text-white font-mono">
+              <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase">Expires In</div>
+              <div className="text-xs font-bold text-slate-900 dark:text-white font-mono">
                 {formatCountdown(secondsRemaining)}
               </div>
             </div>
           </div>
 
           {/* Access Control */}
-          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 flex items-center gap-3.5">
-            <div className={`w-10 h-10 rounded-xl border flex items-center justify-center flex-shrink-0 ${
-              state.has_passcode
-                ? 'bg-indigo-50 dark:bg-indigo-950/70 border-indigo-200 dark:border-indigo-800/70 text-indigo-600 dark:text-indigo-400'
-                : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400'
-            }`}>
-              <KeyRound className="w-5 h-5" />
+          <div className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/60 dark:bg-zinc-900/50 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center text-slate-500 flex-shrink-0">
+              <KeyRound className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Password</div>
-              <div className="text-sm font-bold text-slate-900 dark:text-white">
-                {state.has_passcode ? 'Protected' : 'None (Open)'}
+              <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase">Access Passcode</div>
+              <div className="text-xs font-bold text-slate-900 dark:text-white font-mono">
+                {state.has_passcode ? 'Bcrypt Protected' : 'Open (None)'}
               </div>
             </div>
           </div>
 
           {/* Burn / View Limit */}
-          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 flex items-center gap-3.5">
-            <div className={`w-10 h-10 rounded-xl border flex items-center justify-center flex-shrink-0 ${
-              state.max_views && state.max_views > 0
-                ? 'bg-rose-50 dark:bg-rose-950/70 border-rose-200 dark:border-rose-800/70 text-rose-600 dark:text-rose-400'
-                : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400'
-            }`}>
-              <Flame className="w-5 h-5" />
+          <div className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/60 dark:bg-zinc-900/50 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center text-slate-500 flex-shrink-0">
+              <Flame className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Self-Destruct</div>
-              <div className="text-sm font-bold text-slate-900 dark:text-white">
+              <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase">Destruction Rule</div>
+              <div className="text-xs font-bold text-slate-900 dark:text-white font-mono">
                 {state.max_views && state.max_views > 0
-                  ? state.max_views === 1 ? '1 View (Self-destruct)' : `${state.max_views} Views`
-                  : 'When timer expires'}
+                  ? state.max_views === 1 ? 'Burn on 1st Read' : `${state.max_views} Views`
+                  : 'On Timer Eviction'}
               </div>
             </div>
           </div>
         </div>
 
         {/* QR Code Section */}
-        <div className="border-t border-slate-100 dark:border-slate-800/80 pt-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
-              <QrCode className="w-4 h-4 text-indigo-500" />
-              <span>QR Code for Mobile Access</span>
+        <div className="border-t border-slate-200/70 dark:border-zinc-800 pt-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="flex items-center gap-1.5 text-xs font-mono uppercase font-bold text-slate-800 dark:text-slate-200">
+              <QrCode className="w-3.5 h-3.5 text-emerald-500" />
+              <span>Mobile QR Code</span>
             </h2>
             <button
               onClick={downloadQR}
-              className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+              className="text-xs font-mono text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-3 h-3" />
               <span>Download PNG</span>
             </button>
           </div>
-          <div className="flex flex-col items-center justify-center p-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40">
-            <div className="p-4 rounded-2xl bg-white shadow-md">
+          <div className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-black/40">
+            <div className="p-3 rounded-xl bg-white shadow-sm">
               <QRCodeSVG
                 id="ghost-qr-code"
                 value={visitableShortUrl}
-                size={180}
+                size={160}
                 level="M"
                 includeMargin={false}
               />
             </div>
-            <p className="mt-3 text-xs text-slate-500 dark:text-slate-400 text-center">
-              Scan with any phone camera to open directly on mobile.
+            <p className="mt-2.5 text-[11px] font-mono text-slate-500 dark:text-slate-400 text-center">
+              Scan with any mobile camera to open and decrypt instantly.
             </p>
           </div>
         </div>
 
-        {/* Original URL Preview */}
+        {/* Original Destination Preview */}
         {state.original_url && (
-          <div className="border-t border-slate-100 dark:border-slate-800/80 pt-4 text-xs text-slate-500 dark:text-slate-400">
-            <span className="font-semibold">Destination: </span>
-            <span className="font-mono text-slate-700 dark:text-slate-300 break-all">
-              {state.original_url}
-            </span>
+          <div className="border-t border-slate-200/70 dark:border-zinc-800 pt-3 text-[11px] font-mono text-slate-500 dark:text-slate-400">
+            <span className="font-semibold text-slate-700 dark:text-slate-300">Target: </span>
+            <span className="break-all">{state.original_url}</span>
           </div>
         )}
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+        <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
           <a
             href={visitableShortUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-white text-sm font-semibold text-center flex items-center justify-center gap-2 transition-colors"
+            className="flex-1 py-2.5 px-3 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-slate-300 dark:hover:border-zinc-700 text-slate-800 dark:text-white text-xs font-mono font-semibold text-center flex items-center justify-center gap-1.5 transition-colors"
           >
-            <ExternalLink className="w-4 h-4" />
+            <ExternalLink className="w-3.5 h-3.5" />
             <span>Open Link in New Tab</span>
           </a>
 
           <Link
             to="/"
-            className="flex-1 py-3 px-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-white text-sm font-semibold text-center flex items-center justify-center gap-2 transition-colors"
+            className="flex-1 py-2.5 px-3 rounded-lg border border-transparent bg-slate-100 dark:bg-zinc-800/80 hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-800 dark:text-white text-xs font-mono font-semibold text-center flex items-center justify-center gap-1.5 transition-colors"
           >
-            <PlusCircle className="w-4 h-4" />
+            <PlusCircle className="w-3.5 h-3.5" />
             <span>Create Another Link</span>
           </Link>
         </div>
 
-        {/* Nearby Share Section */}
-        <div className="border-t border-slate-100 dark:border-slate-800/80 pt-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
-              <Radio className="w-4 h-4 text-indigo-500" />
-              <span>Share to Nearby Device</span>
+        {/* Nearby P2P Share Section */}
+        <div className="border-t border-slate-200/70 dark:border-zinc-800 pt-4">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="flex items-center gap-1.5 text-xs font-mono uppercase font-bold text-slate-800 dark:text-slate-200">
+              <Radio className="w-3.5 h-3.5 text-emerald-500" />
+              <span>Beam to Nearby Peer</span>
             </h2>
-            <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-500 dark:text-slate-400">
               <span
                 className={`w-2 h-2 rounded-full inline-block ${
                   wsStatus === 'connected'
@@ -380,43 +370,41 @@ export const CreatedPage: React.FC = () => {
                     : 'bg-rose-400'
                 }`}
               />
-              <span className="flex items-center gap-1.5">
-                <span>
-                  {wsStatus === 'connected'
-                    ? peers.length > 0
-                      ? `${peers.length} peer${peers.length !== 1 ? 's' : ''} online`
-                      : 'Searching for peers...'
-                    : wsStatus === 'connecting'
-                    ? 'Connecting radar...'
-                    : 'Radar offline'}
-                </span>
-                {wsStatus !== 'connected' && wsStatus !== 'connecting' && (
-                  <button
-                    type="button"
-                    onClick={reconnect}
-                    className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline font-semibold"
-                  >
-                    (Retry)
-                  </button>
-                )}
+              <span>
+                {wsStatus === 'connected'
+                  ? peers.length > 0
+                    ? `${peers.length} peer${peers.length !== 1 ? 's' : ''} in range`
+                    : 'Searching peers...'
+                  : wsStatus === 'connecting'
+                  ? 'Connecting radar...'
+                  : 'Radar offline'}
               </span>
+              {wsStatus !== 'connected' && wsStatus !== 'connecting' && (
+                <button
+                  type="button"
+                  onClick={reconnect}
+                  className="text-emerald-500 hover:underline font-semibold ml-1"
+                >
+                  (Retry)
+                </button>
+              )}
             </div>
           </div>
 
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-            Directly beam this ghost link to nearby devices. Click any device below to send instantly.
+          <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400 mb-3">
+            Click any device below to beam this link directly over local WebRTC mesh.
           </p>
 
-          {/* Sent feedback banner */}
+          {/* Feedback banner */}
           {lastSentPeerName && (
-            <div className="mb-3 p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-300 animate-fade-in">
-              <Check className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span className="font-medium">✓ Sent to {lastSentPeerName}!</span>
+            <div className="mb-2.5 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2 text-xs font-mono text-emerald-600 dark:text-emerald-400 animate-fade-in">
+              <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+              <span>✓ Beamed to {lastSentPeerName}</span>
             </div>
           )}
 
           {peers.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {peers.map((peer) => (
                 <PeerAvatarWithProgress
                   key={peer.id}
@@ -424,19 +412,19 @@ export const CreatedPage: React.FC = () => {
                   progress={null}
                   isSent={!!sentTo[peer.id]}
                   isSending={!!sendingTo[peer.id]}
-                  actionLabel="Send Link"
+                  actionLabel="Beam Link"
                   onClick={() => handleSendToPeer(peer)}
                 />
               ))}
             </div>
           ) : (
-            <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-950/30 text-center">
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+            <div className="p-3.5 rounded-lg border border-dashed border-slate-200 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-950/30 text-center">
+              <p className="text-xs font-mono text-slate-500 dark:text-slate-400">
                 {wsStatus === 'connected'
-                  ? "No nearby devices detected on your local network. Open GhostURL on another device or tab to share."
+                  ? 'No nearby devices detected on your Wi-Fi network. Open GhostURL on another device to beam directly.'
                   : wsStatus === 'connecting'
-                  ? "Connecting to nearby device network..."
-                  : "Radar is offline. Ensure VITE_WS_URL or VITE_API_BASE_URL is set in Vercel project settings and redeployed."}
+                  ? 'Connecting to radar signaling hub...'
+                  : 'Radar is offline.'}
               </p>
             </div>
           )}
