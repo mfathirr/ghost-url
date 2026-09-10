@@ -8,6 +8,7 @@ import type {
   FileOfferPayload,
   FileTransferProgress,
 } from '../types/p2p';
+import { soundFx } from '../utils/soundEngine';
 
 const CHUNK_SIZE = 16384; // 16 KB chunks for stable WebRTC throughput across all devices
 
@@ -251,6 +252,7 @@ export function useP2P(initialRoomCode = '') {
         });
 
         setTimeout(() => {
+          soundFx.playDataBurst();
           setOutgoingProgress(null);
           pendingFileSends.current.delete(transferId);
           resolve(true);
@@ -332,6 +334,7 @@ export function useP2P(initialRoomCode = '') {
         }
 
         setTimeout(() => {
+          soundFx.playDataBurst();
           setOutgoingProgress(null);
           pendingFileSends.current.delete(transferId);
           resolve(true);
@@ -380,6 +383,7 @@ export function useP2P(initialRoomCode = '') {
           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 
       if (isIOS) {
+        soundFx.playDataBurst();
         setIncomingProgress(null);
         setIncomingTransfer({
           senderId: peerId,
@@ -396,6 +400,7 @@ export function useP2P(initialRoomCode = '') {
           },
         });
       } else {
+        soundFx.playDataBurst();
         const a = document.createElement('a');
         a.href = downloadUrl;
         a.download = rx.fileName;
@@ -529,6 +534,7 @@ export function useP2P(initialRoomCode = '') {
         }
 
         default: {
+          soundFx.playDataBurst();
           setIncomingTransfer({
             senderId,
             senderName: data.senderName || 'Nearby Device',
@@ -824,6 +830,9 @@ export function useP2P(initialRoomCode = '') {
 
             case 'peer-joined': {
               const { peer: newPeer } = msg.payload;
+              if (newPeer && !peersRef.current.some((p) => p.id === newPeer.id)) {
+                soundFx.playSonarPing();
+              }
               setPeers((prev) => {
                 if (prev.some((p) => p.id === newPeer.id)) return prev;
                 return [...prev, newPeer];
@@ -1130,6 +1139,7 @@ export function useP2P(initialRoomCode = '') {
       const existingDc = dataChannels.current.get(peerId);
       if (existingDc && existingDc.readyState === 'open') {
         existingDc.send(serialized);
+        soundFx.playDataBurst();
         return true;
       }
 
@@ -1150,6 +1160,7 @@ export function useP2P(initialRoomCode = '') {
               payload,
             });
             resolved = true;
+            soundFx.playDataBurst();
             resolve(true);
           }
         }, 1200);
@@ -1161,6 +1172,7 @@ export function useP2P(initialRoomCode = '') {
               clearTimeout(timer);
               dc.send(serialized);
               resolved = true;
+              soundFx.playDataBurst();
               resolve(true);
             }
           },

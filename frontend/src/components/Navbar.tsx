@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Ghost, ShieldCheck } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
+import { SoundToggle } from './SoundToggle';
 
 export const Navbar: React.FC = () => {
   return (
@@ -23,11 +24,12 @@ export const Navbar: React.FC = () => {
           </div>
         </Link>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <div className="hidden sm:flex items-center gap-1.5 font-mono text-[11px] text-slate-500 dark:text-slate-400">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" aria-hidden="true" />
             <span>ZERO PERSISTENCE</span>
           </div>
+          <SoundToggle />
           <ThemeToggle />
         </div>
       </div>

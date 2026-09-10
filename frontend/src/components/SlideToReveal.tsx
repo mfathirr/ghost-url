@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, useMotionValue, useTransform, useReducedMotion } from 'motion/react';
 import { Check, ArrowRight, Flame } from 'lucide-react';
+import { soundFx } from '../utils/soundEngine';
 
 interface SlideToRevealProps {
   onConfirm: () => void;
@@ -18,6 +19,7 @@ export const SlideToReveal: React.FC<SlideToRevealProps> = ({
   const [confirmed, setConfirmed] = useState(false);
   const x = useMotionValue(0);
   const shouldReduceMotion = useReducedMotion();
+  const lastDetentRef = useRef<number>(0);
 
   // Measure container width minus thumb width and horizontal padding (p-1.5 = 6px left + 6px right = 12px)
   useEffect(() => {
@@ -34,6 +36,21 @@ export const SlideToReveal: React.FC<SlideToRevealProps> = ({
     return () => window.removeEventListener('resize', updateMaxDrag);
   }, []);
 
+  // Play subtle micro-ticks on slider detents (25%, 50%, 75%)
+  useEffect(() => {
+    return x.on('change', (latest) => {
+      if (maxDrag <= 0) return;
+      const progress = Math.min(1, Math.max(0, latest / maxDrag));
+      const detentIndex = Math.floor(progress / 0.25);
+      if (detentIndex !== lastDetentRef.current && detentIndex > 0) {
+        lastDetentRef.current = detentIndex;
+        soundFx.playMicroTick();
+      } else if (detentIndex === 0) {
+        lastDetentRef.current = 0;
+      }
+    });
+  }, [x, maxDrag]);
+
   // Visual opacity transform for the background cue text as thumb slides
   const textOpacity = useTransform(x, [0, maxDrag * 0.5], [1, 0]);
   const fillWidth = useTransform(x, [0, maxDrag], ['0%', '100%']);
@@ -41,13 +58,7 @@ export const SlideToReveal: React.FC<SlideToRevealProps> = ({
   const triggerConfirm = useCallback(() => {
     if (disabled || confirmed || isUnlocking) return;
     setConfirmed(true);
-    if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      try {
-        navigator.vibrate([15, 30, 15]);
-      } catch {
-        // ignore
-      }
-    }
+    soundFx.playMicroTick();
     onConfirm();
   }, [disabled, confirmed, isUnlocking, onConfirm]);
 

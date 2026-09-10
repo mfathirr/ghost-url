@@ -1,3 +1,5 @@
+import { soundFx } from './soundEngine';
+
 /**
  * Copies text to clipboard with fallback for non-secure contexts (e.g. HTTP over LAN).
  */
@@ -8,6 +10,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
   if (navigator.clipboard && window.isSecureContext) {
     try {
       await navigator.clipboard.writeText(text);
+      soundFx.playCopySuccess();
       return true;
     } catch {
       // Fall through to execCommand
@@ -27,6 +30,9 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     textArea.select();
     const successful = document.execCommand('copy');
     document.body.removeChild(textArea);
+    if (successful) {
+      soundFx.playCopySuccess();
+    }
     return successful;
   } catch (err) {
     console.warn('[Clipboard] Fallback copy failed:', err);

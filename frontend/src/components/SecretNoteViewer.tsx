@@ -19,6 +19,7 @@ import 'prismjs/components/prism-markdown';
 import 'prismjs/components/prism-go';
 import 'prismjs/components/prism-rust';
 import { copyToClipboard } from '../utils/clipboard';
+import { soundFx } from '../utils/soundEngine';
 
 interface SecretNoteViewerProps {
   content: string;
@@ -86,6 +87,7 @@ export const SecretNoteViewer: React.FC<SecretNoteViewerProps> = ({
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
+          soundFx.playIncinerator();
           return 0;
         }
         return prev - 1;

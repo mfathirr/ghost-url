@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import type { IncomingTransfer, FileTransferProgress } from '../types/p2p';
 import { formatBytes } from './GhostDropZone';
+import { soundFx } from '../utils/soundEngine';
 
 function getFileTypeIcon(type: string, name: string) {
   const lowerType = (type || '').toLowerCase();
@@ -85,6 +86,7 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(transfer.content);
+      soundFx.playCopySuccess();
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {

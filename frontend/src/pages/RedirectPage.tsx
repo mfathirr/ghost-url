@@ -20,6 +20,7 @@ import { SEO } from '../components/SEO';
 import { importKeyFromBase64, decrypt } from '../utils/crypto';
 import { SecretNoteViewer } from '../components/SecretNoteViewer';
 import { SlideToReveal } from '../components/SlideToReveal';
+import { soundFx } from '../utils/soundEngine';
 
 export const RedirectPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -39,6 +40,13 @@ export const RedirectPage: React.FC = () => {
   const [burned, setBurned] = useState(false);
   const [burnCountdown, setBurnCountdown] = useState<number>(7);
   const [cryptoError, setCryptoError] = useState<string | null>(null);
+
+  // Disarm duress silence lock when navigating away from this page
+  useEffect(() => {
+    return () => {
+      soundFx.resetMute();
+    };
+  }, []);
 
   // Extract hash fragment parameters (#k=...&t=...&lang=...)
   const hash = typeof window !== 'undefined'
@@ -66,6 +74,10 @@ export const RedirectPage: React.FC = () => {
         setCryptoError('Could not unlock this secret. The key in your link might be incomplete or corrupted.');
         return;
       }
+    }
+
+    if (isBurned) {
+      soundFx.playIncinerator();
     }
 
     if (fragmentType === 'note') {
@@ -157,6 +169,7 @@ export const RedirectPage: React.FC = () => {
         (err instanceof ApiError && err.status === 404) ||
         (err instanceof Error && (err.message.toLowerCase().includes('not found') || err.message.toLowerCase().includes('expired')))
       ) {
+        soundFx.silence();
         setNotFound(true);
         return;
       }
@@ -355,6 +368,7 @@ export const RedirectPage: React.FC = () => {
                     (err instanceof ApiError && err.status === 404) ||
                     (err instanceof Error && (err.message.toLowerCase().includes('not found') || err.message.toLowerCase().includes('expired')))
                   ) {
+                    soundFx.silence();
                     setNotFound(true);
                     return;
                   }
