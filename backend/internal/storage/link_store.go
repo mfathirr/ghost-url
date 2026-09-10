@@ -27,6 +27,11 @@ type LinkStore interface {
 	// Exists checks if a slug is currently active in storage.
 	Exists(ctx context.Context, slug string) (bool, error)
 
+	// IncrementAndCheckViews increments the view count for a link.
+	// If maxViews > 0 and the count reaches or exceeds maxViews, the link is deleted and burned is true.
+	// Returns remaining views (-1 if unlimited), whether it was burned, and error.
+	IncrementAndCheckViews(ctx context.Context, slug string, maxViews int) (viewsRemaining int, burned bool, err error)
+
 	// Ping checks health of the storage connection.
 	Ping(ctx context.Context) error
 

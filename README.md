@@ -21,22 +21,26 @@
 
 ## 📖 Overview
 
-**GhostURL** is an account-less, privacy-first web utility combining three core capabilities into a cohesive interface:
+**GhostURL** is an account-less, privacy-first web utility combining four core capabilities into a cohesive interface:
 
-1. **⚡ Quick Bridge (Ephemeral Link Shortener)**: Short links that self-destruct after a specified duration using native Redis hardware/memory TTL eviction. Optionally protect sensitive destinations with salted **bcrypt** passcodes.
-2. **📡 Nearby Radar (AirDrop / Snapdrop P2P Sharing)**: Instant, zero-setup local-network device discovery. Beam links, text, and messages directly between devices over encrypted **WebRTC DataChannels** without ever touching backend databases or persistent storage.
-3. **🚀 GhostDrop (Zero-Storage P2P File Beaming)**: Beam files of arbitrary size (tested up to 1.12+ GB) directly between peer browsers with dual-engine streaming (WebRTC DataChannels + WebSocket signaling relay fallback), adaptive backpressure flow control, and zero server storage.
+1. **⚡ Disappearing Links (Quick Bridge)**: Short links that self-destruct after a specified duration using native Redis hardware/memory TTL eviction, with optional single-use self-destruct view limits and salted **bcrypt** passcodes.
+2. **📝 Secret Notes (Zero-Knowledge E2EE)**: End-to-end encrypted notes, passwords, and code snippets with PrismJS syntax highlighting. Encrypted directly in the browser via AES-256-GCM; the decryption key stays inside the URL hash fragment (`#k=...`), keeping backend servers completely blind to contents.
+3. **📡 Nearby Radar (AirDrop / Snapdrop P2P Sharing)**: Instant, zero-setup local-network device discovery. Beam links, text, and messages directly between devices over encrypted **WebRTC DataChannels** without ever touching backend databases or persistent storage.
+4. **🚀 GhostDrop (Zero-Storage P2P File Beaming)**: Beam files of arbitrary size (tested up to 1.12+ GB) directly between peer browsers with dual-engine streaming (WebRTC DataChannels + WebSocket signaling relay fallback), adaptive backpressure flow control, and zero server storage.
 
 ---
 
 ## ✨ Key Features
 
-### ⚡ 1. Quick Bridge
+### ⚡ 1. Disappearing Links & Secret Notes
 - **Native Redis TTL Expiration**: Preset durations (`5m`, `30m`, `1h`, `24h`) or custom expirations up to 7 days. Keys are evicted automatically from RAM when expired.
+- **Single-Use Self-Destruct (Burn-on-Read)**: Set view limits (`1 View`, `3 Views`, `5 Views`). When the view quota is reached, Redis atomically deletes the key, destroying the link or note forever.
+- **Client-Side Zero-Knowledge Encryption**: Destination URLs and Secret Notes can be encrypted in the browser with AES-256-GCM before dispatch. The decryption key stays strictly in the URL fragment (`#k=...`), which browsers never send to servers.
+- **Secret Notes with Syntax Highlighting**: Share code snippets and passwords safely with support for 10+ languages (JavaScript, Python, Go, Rust, Bash, SQL, JSON, Markdown, etc.) via PrismJS.
 - **Bcrypt Passcode Protection**: Optional secret passcodes are hashed using standard bcrypt salt rounds before persistence.
 - **Custom Slugs or Secure Random IDs**: Pick a custom vanity alias or let the Go backend allocate an 8-character cryptographically random base62 slug.
-- **Instant QR Code Generation**: In-browser client-side QR generation ready for immediate mobile camera scanning.
-- **Transparent Redirection**: Direct `302 Found` redirects for open links, and a secure password-unlock form for protected destinations.
+- **Instant QR Code Generation**: In-browser client-side QR generation with preserved decryption keys, ready for immediate mobile camera scanning.
+- **Transparent Redirection & Self-Destruct Countdown**: Direct `302 Found` redirects for open links, secure password-unlock vaults for protected destinations, and visual self-destruct confirmations.
 
 ### 📡 2. Nearby Radar
 - **Zero-Setup Local Network Discovery**: Devices connected to the same Wi-Fi or gateway automatically discover one another via transient public IP hashing.
@@ -58,9 +62,10 @@
 - **Automatic Cleanup**: Assembles `Blob` in receiver memory, prompts download, and revokes ephemeral object URLs after 60 seconds.
 
 ### 🔍 4. Search & Generative Engine Optimization (SEO & GEO)
-- **Zero-Dependency React 19 Head Sync**: Native tag hoisting with dynamic fallback synchronization for canonical links, Open Graph, and Twitter Cards.
+- **Dynamic Mode-Based Metadata**: Real-time title, description, and keyword pivoting for Disappearing Links, Secret Notes, and File Beaming.
+- **Zero-Dependency React 19 Head Sync**: Native tag hoisting with dynamic fallback synchronization for canonical links, keywords, and Open Graph cards.
 - **AI Discoverability (`llms.txt`)**: Machine-readable platform manifest (`/llms.txt`) providing AI agents and generative engines with accurate capability context.
-- **Semantic Schema.org JSON-LD**: Embedded `WebApplication` and `Offer` schemas detailing privacy guarantees, supported protocols, and zero pricing.
+- **Semantic Schema.org JSON-LD**: Embedded `WebApplication`, `Offer`, and `FAQPage` schemas detailing privacy guarantees, supported protocols, and rich answers for search snippets.
 - **Privacy-Guaranteed Indexing Rules**: Strict `noindex, nofollow` headers dynamically applied to ephemeral link confirmations (`/created`), redirect unlock vaults (`/r/:slug`), and error pages, ensuring private transfers and secret links are never indexed or leaked.
 
 ---
@@ -223,14 +228,14 @@ npm run build
 
 | Method | Route | Description |
 |---|---|---|
-| `POST` | `/api/links` | Create an ephemeral short link with TTL & optional passcode |
-| `GET` | `/api/links/:slug` | Check public metadata (protection status, remaining TTL) |
-| `POST` | `/api/links/:slug/unlock` | Verify passcode and reveal destination URL |
-| `GET` | `/r/:slug` | Direct 302 redirect for public links (or route to unlock form) |
+| `POST` | `/api/links` | Create an ephemeral short link or encrypted note with TTL, optional passcode, and view limit (`max_views`) |
+| `GET` | `/api/links/:slug` | Check public metadata (protection status, remaining TTL, `views_remaining`, `max_views`) without consuming views |
+| `POST` | `/api/links/:slug/unlock` | Verify passcode, atomically decrement view quota, and reveal destination URL or encrypted note (returns `burned: true` if limit reached) |
+| `GET` | `/r/:slug` | Direct 302 redirect for public links (or route to unlock form / secret note viewer) |
 | `GET` | `/health` | Health check probe verifying Redis connectivity |
 | `GET` | `/ws/p2p` | WebSocket endpoint for IP discovery & WebRTC signaling |
 
-### Example: Create Ephemeral Link
+### Example: Create Ephemeral Link with View Limits
 ```bash
 curl -X POST http://localhost:8080/api/links \
   -H "Content-Type: application/json" \
@@ -238,7 +243,8 @@ curl -X POST http://localhost:8080/api/links \
     "url": "https://github.com/google/antigravity",
     "alias": "antigravity-guide",
     "passcode": "secret123",
-    "expires_in": "1h"
+    "expires_in": "1h",
+    "max_views": 1
   }'
 ```
 
@@ -249,7 +255,8 @@ Response:
   "short_url": "http://localhost:8080/r/antigravity-guide",
   "expires_at": "2026-09-09T16:00:00Z",
   "ttl_seconds": 3600,
-  "has_passcode": true
+  "has_passcode": true,
+  "max_views": 1
 }
 ```
 
@@ -257,11 +264,13 @@ Response:
 
 ## 🔒 Security & Privacy
 
+- **Zero-Knowledge Client-Side E2EE**: Destination URLs and Secret Notes are encrypted in the browser with AES-256-GCM before dispatch. The decryption key is preserved strictly in the URL hash fragment (`#k=...`). Per RFC 3986, browsers never transmit URL hash fragments in HTTP requests, keeping backend servers and Redis mathematically blind to contents.
+- **Atomic Single-Use Self-Destruct (Burn-on-Read)**: View quotas are tracked via atomic Redis `HIncrBy`. Once the quota is reached upon successful unlock, Redis immediately executes `DEL` to permanently destroy the key. Subsequent visits return 404.
 - **Zero Database Retention for P2P & GhostDrop**: WebRTC DataChannels and WebSocket signaling relay streams transfer data directly between browser engines. URLs, text, and files beamed via radar or GhostDrop never touch persistent disks, databases, or server logs.
 - **Volatile Redis Expiration**: All links use Redis `EXPIRE`. When the TTL elapses, keys are evicted automatically by hardware memory management.
 - **Bcrypt Passcode Hashing**: Link passcodes are salted and hashed with standard bcrypt cost before being stored.
 - **Zero Client IP Logging**: Public IP addresses are processed in-memory solely to isolate local radar rooms and are never written to disk.
-- **Strict Noindex Privacy Guarantee**: Ephemeral link results and passcode unlock vaults are dynamically marked `noindex, nofollow` to prevent search engine caching.
+- **Strict Noindex Privacy Guarantee**: Ephemeral link results, secret note views, and passcode unlock vaults are dynamically marked `noindex, nofollow` to prevent search engine caching.
 - **Privacy-Preserving Telemetry**: Integrated with `@vercel/analytics` in a 100% cookieless and GDPR-compliant mode without recording PII or client IP addresses.
 
 ---

@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/ghost-url/backend/internal/config"
@@ -67,6 +68,8 @@ func (r *RedisLinkStore) SaveLink(ctx context.Context, slug string, link *models
 		"passcode_hash": link.PasscodeHash,
 		"created_at":    link.CreatedAt.Format(time.RFC3339),
 		"expires_at":    link.ExpiresAt.Format(time.RFC3339),
+		"max_views":     link.MaxViews,
+		"view_count":    link.ViewCount,
 	})
 	pipe.Expire(ctx, key, ttl)
 
@@ -106,15 +109,41 @@ func (r *RedisLinkStore) GetLink(ctx context.Context, slug string) (*models.Stor
 
 	createdAt, _ := time.Parse(time.RFC3339, fields["created_at"])
 	expiresAt, _ := time.Parse(time.RFC3339, fields["expires_at"])
+	maxViews, _ := strconv.Atoi(fields["max_views"])
+	viewCount, _ := strconv.Atoi(fields["view_count"])
 
 	link := &models.StoredLink{
 		URL:          fields["url"],
 		PasscodeHash: fields["passcode_hash"],
 		CreatedAt:    createdAt,
 		ExpiresAt:    expiresAt,
+		MaxViews:     maxViews,
+		ViewCount:    viewCount,
 	}
 
 	return link, ttl, nil
+}
+
+// IncrementAndCheckViews increments the view count for a link.
+// If maxViews > 0 and count reaches or exceeds maxViews, the link is deleted and burned is true.
+func (r *RedisLinkStore) IncrementAndCheckViews(ctx context.Context, slug string, maxViews int) (int, bool, error) {
+	if maxViews <= 0 {
+		return -1, false, nil
+	}
+
+	key := linkKey(slug)
+	count, err := r.client.HIncrBy(ctx, key, "view_count", 1).Result()
+	if err != nil {
+		return 0, false, fmt.Errorf("increment view count: %w", err)
+	}
+
+	if count >= int64(maxViews) {
+		_ = r.client.Del(ctx, key).Err()
+		return 0, true, nil
+	}
+
+	remaining := maxViews - int(count)
+	return remaining, false, nil
 }
 
 // Exists checks if a slug exists and is active.

@@ -68,11 +68,23 @@ func ValidateAlias(alias string) error {
 	return nil
 }
 
-// ValidateURL checks whether longURL is a valid absolute HTTP or HTTPS URL.
+// ValidateURL checks whether longURL is a valid absolute HTTP or HTTPS URL,
+// or a client-side end-to-end encrypted payload prefixed with "enc:".
 func ValidateURL(rawURL string) (string, error) {
 	trimmed := strings.TrimSpace(rawURL)
 	if trimmed == "" {
 		return "", ErrInvalidURL
+	}
+
+	// Support Zero-Knowledge E2EE encrypted ciphertext payload
+	if strings.HasPrefix(trimmed, "enc:") {
+		if len(trimmed) < 10 {
+			return "", errors.New("encrypted payload is too short")
+		}
+		if len(trimmed) > 262144 { // 256 KB max for secret notes / encrypted payloads
+			return "", errors.New("encrypted payload exceeds maximum size of 256KB")
+		}
+		return trimmed, nil
 	}
 
 	parsed, err := url.ParseRequestURI(trimmed)

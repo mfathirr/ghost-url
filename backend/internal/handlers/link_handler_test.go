@@ -64,6 +64,30 @@ func (m *mockStore) Exists(_ context.Context, slug string) (bool, error) {
 	return exists, nil
 }
 
+func (m *mockStore) IncrementAndCheckViews(_ context.Context, slug string, maxViews int) (int, bool, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	link, exists := m.links[slug]
+	if !exists {
+		return 0, false, storage.ErrLinkNotFound
+	}
+
+	if maxViews <= 0 {
+		return -1, false, nil
+	}
+
+	link.ViewCount++
+	if link.ViewCount >= maxViews {
+		delete(m.links, slug)
+		delete(m.ttls, slug)
+		return 0, true, nil
+	}
+
+	remaining := maxViews - link.ViewCount
+	return remaining, false, nil
+}
+
 func (m *mockStore) Ping(_ context.Context) error {
 	return nil
 }
@@ -240,3 +264,71 @@ func TestPasscodeUnlockAndRedirect(t *testing.T) {
 		}
 	})
 }
+
+func TestBurnOnReadAndMetadata(t *testing.T) {
+	store := newMockStore()
+	router := setupTestRouter(store)
+	now := time.Now()
+
+	// 1-view burn-on-read link
+	err := store.SaveLink(context.Background(), "burn-1", &models.StoredLink{
+		URL:       "https://burn.example.com",
+		CreatedAt: now,
+		ExpiresAt: now.Add(time.Hour),
+		MaxViews:  1,
+		ViewCount: 0,
+	}, time.Hour, false)
+	if err != nil {
+		t.Fatalf("failed to save link: %v", err)
+	}
+
+	t.Run("metadata reports views_remaining = 1 before unlock", func(t *testing.T) {
+		req, _ := http.NewRequest(http.MethodGet, "/api/links/burn-1", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected 200, got %d", w.Code)
+		}
+		var meta models.LinkMetadataResponse
+		if err := json.Unmarshal(w.Body.Bytes(), &meta); err != nil {
+			t.Fatalf("decode meta: %v", err)
+		}
+		if meta.ViewsRemaining == nil || *meta.ViewsRemaining != 1 {
+			t.Errorf("expected views_remaining 1, got %v", meta.ViewsRemaining)
+		}
+	})
+
+	t.Run("first unlock succeeds and burns link", func(t *testing.T) {
+		body, _ := json.Marshal(map[string]string{"passcode": ""})
+		req, _ := http.NewRequest(http.MethodPost, "/api/links/burn-1/unlock", bytes.NewBuffer(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected 200, got %d", w.Code)
+		}
+		var resp models.UnlockResponse
+		if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+			t.Fatalf("decode resp: %v", err)
+		}
+		if resp.URL != "https://burn.example.com" {
+			t.Errorf("expected destination URL, got %s", resp.URL)
+		}
+		if !resp.Burned {
+			t.Errorf("expected burned = true on 1-view link, got %v", resp.Burned)
+		}
+	})
+
+	t.Run("subsequent access returns 404", func(t *testing.T) {
+		req, _ := http.NewRequest(http.MethodGet, "/api/links/burn-1", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusNotFound {
+			t.Errorf("expected 404 after burn, got %d", w.Code)
+		}
+	})
+}
+

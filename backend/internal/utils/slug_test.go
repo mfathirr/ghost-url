@@ -59,6 +59,8 @@ func TestValidateURL(t *testing.T) {
 	}{
 		{"valid https", "https://example.com/some/path?query=1", false},
 		{"valid http", "http://localhost:3000", false},
+		{"valid encrypted payload", "enc:v1:aXZfdGVzdA==:Y2lwaGVydGV4dA==", false},
+		{"too short encrypted payload", "enc:short", true},
 		{"missing scheme", "example.com", true},
 		{"invalid scheme ftp", "ftp://example.com", true},
 		{"empty url", "", true},

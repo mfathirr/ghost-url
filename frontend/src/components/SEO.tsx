@@ -1,15 +1,18 @@
 import React, { useEffect } from 'react';
 
 export const DEFAULT_SITE_NAME = 'GhostURL';
-export const DEFAULT_TITLE = 'GhostURL — Share links and files that disappear.';
+export const DEFAULT_TITLE = 'GhostURL — Self-Destructing Links, Encrypted Notes & P2P File Beaming';
 export const DEFAULT_DESCRIPTION =
-  "GhostURL lets you share links and files that automatically disappear. No account needed. Nothing stored. Just share and it's gone.";
+  "Share self-destructing links, end-to-end encrypted secret notes, and direct P2P files that disappear forever. No account needed, zero logs, nothing stored.";
+export const DEFAULT_KEYWORDS =
+  'self destructing notes, secret note, burn on read link, end to end encrypted link, ephemeral link, privnote alternative, temporary pastebin, private code share, p2p file transfer, zero knowledge encryption';
 export const DEFAULT_CANONICAL = 'https://www.ghosturl.web.id/';
 export const DEFAULT_OG_IMAGE = 'https://www.ghosturl.web.id/og-image.svg';
 
 export interface SEOProps {
   title?: string;
   description?: string;
+  keywords?: string;
   canonical?: string;
   ogImage?: string;
   ogType?: 'website' | 'article';
@@ -20,6 +23,7 @@ export interface SEOProps {
 export const SEO: React.FC<SEOProps> = ({
   title,
   description = DEFAULT_DESCRIPTION,
+  keywords = DEFAULT_KEYWORDS,
   canonical,
   ogImage = DEFAULT_OG_IMAGE,
   ogType = 'website',
@@ -56,6 +60,9 @@ export const SEO: React.FC<SEOProps> = ({
     };
 
     updateMeta('name', 'description', description);
+    if (!noIndex && keywords) {
+      updateMeta('name', 'keywords', keywords);
+    }
     updateMeta('name', 'robots', noIndex ? 'noindex, nofollow' : 'index, follow');
     updateMeta('property', 'og:title', fullTitle);
     updateMeta('property', 'og:description', description);
@@ -68,7 +75,7 @@ export const SEO: React.FC<SEOProps> = ({
     updateMeta('name', 'twitter:title', fullTitle);
     updateMeta('name', 'twitter:description', description);
     updateMeta('name', 'twitter:image', ogImage);
-  }, [fullTitle, description, canonicalUrl, ogImage, ogType, noIndex]);
+  }, [fullTitle, description, keywords, canonicalUrl, ogImage, ogType, noIndex]);
 
   return (
     <>

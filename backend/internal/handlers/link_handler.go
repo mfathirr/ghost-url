@@ -44,6 +44,11 @@ func (h *LinkHandler) CreateLink(c *gin.Context) {
 		return
 	}
 
+	if req.MaxViews < 0 || req.MaxViews > 100 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "max_views must be between 0 (unlimited) and 100"})
+		return
+	}
+
 	ttl, err := utils.ParseTTL(req.ExpiresIn, req.TTLSeconds)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -108,6 +113,8 @@ func (h *LinkHandler) CreateLink(c *gin.Context) {
 		PasscodeHash: passcodeHash,
 		CreatedAt:    now,
 		ExpiresAt:    expiresAt,
+		MaxViews:     req.MaxViews,
+		ViewCount:    0,
 	}
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), h.cfg.WriteTimeout)
@@ -130,6 +137,7 @@ func (h *LinkHandler) CreateLink(c *gin.Context) {
 		ExpiresAt:   expiresAt,
 		TTLSeconds:  int64(ttl.Seconds()),
 		HasPasscode: passcodeHash != "",
+		MaxViews:    req.MaxViews,
 	})
 }
 
@@ -154,15 +162,26 @@ func (h *LinkHandler) GetLinkMetadata(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, models.LinkMetadataResponse{
+	resp := models.LinkMetadataResponse{
 		Slug:         slug,
 		Protected:    link.PasscodeHash != "",
 		ExpiresAt:    link.ExpiresAt,
 		TTLRemaining: int64(ttl.Seconds()),
-	})
+		MaxViews:     link.MaxViews,
+	}
+	if link.MaxViews > 0 {
+		remaining := link.MaxViews - link.ViewCount
+		if remaining < 0 {
+			remaining = 0
+		}
+		resp.ViewsRemaining = &remaining
+	}
+
+	c.JSON(http.StatusOK, resp)
 }
 
 // UnlockLink handles POST /api/links/:slug/unlock to verify passcode and obtain the destination URL.
+// It also atomically increments view count and burns the link if the view limit is reached.
 func (h *LinkHandler) UnlockLink(c *gin.Context) {
 	slug := c.Param("slug")
 	if slug == "" {
@@ -189,24 +208,30 @@ func (h *LinkHandler) UnlockLink(c *gin.Context) {
 		return
 	}
 
-	// If no passcode was set, return URL directly
-	if link.PasscodeHash == "" {
-		c.JSON(http.StatusOK, models.UnlockResponse{URL: link.URL})
+	// If passcode is set, verify passcode hash before burning any view
+	if link.PasscodeHash != "" {
+		if err := bcrypt.CompareHashAndPassword([]byte(link.PasscodeHash), []byte(req.Passcode)); err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Incorrect passcode"})
+			return
+		}
+	}
+
+	// Consume view: atomically increment view counter and burn if limit reached
+	_, burned, err := h.store.IncrementAndCheckViews(ctx, slug, link.MaxViews)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error updating views"})
 		return
 	}
 
-	// Verify passcode hash
-	if err := bcrypt.CompareHashAndPassword([]byte(link.PasscodeHash), []byte(req.Passcode)); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Incorrect passcode"})
-		return
-	}
-
-	c.JSON(http.StatusOK, models.UnlockResponse{URL: link.URL})
+	c.JSON(http.StatusOK, models.UnlockResponse{
+		URL:    link.URL,
+		Burned: burned,
+	})
 }
 
 // RedirectLink handles GET /r/:slug for direct link traversal.
-// Unprotected links issue an immediate HTTP 302 Found redirect.
-// Passcode-protected links redirect to the frontend unlock screen.
+// Unprotected plain links issue an immediate HTTP 302 Found redirect.
+// Passcode-protected, burn-on-read, or client-encrypted links redirect to the frontend view.
 func (h *LinkHandler) RedirectLink(c *gin.Context) {
 	slug := c.Param("slug")
 	if slug == "" {
@@ -233,12 +258,15 @@ func (h *LinkHandler) RedirectLink(c *gin.Context) {
 		return
 	}
 
-	// Passcode protected -> route to frontend unlock view or return JSON if requested by API
-	if link.PasscodeHash != "" {
+	// If passcode protected, has view limits, or is not a plain HTTP/HTTPS URL:
+	// route to frontend unlock view or return JSON if requested by API
+	isStandardURL := strings.HasPrefix(link.URL, "http://") || strings.HasPrefix(link.URL, "https://")
+	if link.PasscodeHash != "" || link.MaxViews > 0 || !isStandardURL {
 		accept := c.GetHeader("Accept")
 		if strings.Contains(accept, "application/json") && !strings.Contains(accept, "text/html") {
 			c.JSON(http.StatusOK, gin.H{
-				"protected": true,
+				"protected": link.PasscodeHash != "",
+				"max_views": link.MaxViews,
 				"slug":      slug,
 			})
 			return
@@ -250,7 +278,7 @@ func (h *LinkHandler) RedirectLink(c *gin.Context) {
 		return
 	}
 
-	// No passcode: Immediate 302 redirect
+	// No passcode and no view limit: Immediate 302 redirect
 	c.Redirect(http.StatusFound, link.URL)
 }
 
