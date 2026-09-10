@@ -13,12 +13,13 @@ import {
   Flame,
   KeyRound,
 } from 'lucide-react';
-import { getLinkMetadata, unlockLink } from '../services/api';
+import { getLinkMetadata, unlockLink, ApiError } from '../services/api';
 import type { LinkMetadata } from '../types';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { SEO } from '../components/SEO';
 import { importKeyFromBase64, decrypt } from '../utils/crypto';
 import { SecretNoteViewer } from '../components/SecretNoteViewer';
+import { SlideToReveal } from '../components/SlideToReveal';
 
 export const RedirectPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -114,8 +115,15 @@ export const RedirectPage: React.FC = () => {
         const meta = await getLinkMetadata(slug);
         setMetadata(meta);
 
-        // If link is not protected by passcode, unlock immediately
+        // If link is not protected by passcode, check if safe burn applies
         if (!meta.protected) {
+          // If single-view / burn-on-read link, do NOT auto-unlock!
+          // Require explicit human interaction via SlideToReveal.
+          if (meta.max_views === 1 || meta.views_remaining === 1) {
+            setLoading(false);
+            return;
+          }
+
           const res = await unlockLink(slug, '');
           await processPayload(res.url, !!res.burned);
           return;
@@ -145,6 +153,13 @@ export const RedirectPage: React.FC = () => {
       const res = await unlockLink(slug, passcode.trim());
       await processPayload(res.url, !!res.burned);
     } catch (err: unknown) {
+      if (
+        (err instanceof ApiError && err.status === 404) ||
+        (err instanceof Error && (err.message.toLowerCase().includes('not found') || err.message.toLowerCase().includes('expired')))
+      ) {
+        setNotFound(true);
+        return;
+      }
       if (err instanceof Error) {
         setErrorMessage(err.message);
       } else {
@@ -241,34 +256,34 @@ export const RedirectPage: React.FC = () => {
     );
   }
 
-  // Mission: Impossible Self-Destruct Countdown for Burned URLs
+  // Self-Destruct Countdown for Burned URLs
   if (burned && destinationUrl) {
     return (
-      <div className="max-w-lg mx-auto px-4 py-16 animate-fade-in text-center">
+      <div className="max-w-lg mx-auto px-4 py-16 animate-fade-in text-center font-sans">
         <SEO title="Link Destroyed" description="This link has self-destructed." noIndex={true} />
-        <div className="stealth-card rounded-2xl p-6 sm:p-8 border border-rose-500/40 text-white space-y-5 bg-rose-950/70">
-          <div className="w-14 h-14 mx-auto rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 shadow-inner">
-            <Flame className="w-7 h-7 animate-bounce" />
+        <div className="stealth-card rounded-2xl p-6 sm:p-8 border border-rose-300 dark:border-rose-500/40 text-slate-900 dark:text-white space-y-5 bg-rose-50/90 dark:bg-rose-950/70">
+          <div className="w-14 h-14 mx-auto rounded-xl bg-rose-500/10 dark:bg-rose-500/20 border border-rose-500/30 dark:border-rose-500/40 flex items-center justify-center text-rose-500 dark:text-rose-400 shadow-sm">
+            <Flame className="w-7 h-7" />
           </div>
 
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-rose-500/20 border border-rose-400/30 text-[10px] font-mono font-bold uppercase tracking-wider text-rose-300 mb-2">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-rose-500/10 dark:bg-rose-500/20 border border-rose-400/30 text-[10px] font-mono font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300 mb-2">
               <span>Self-Destruct Triggered</span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-rose-950 dark:text-white">
               Link Destroyed Forever
             </h1>
-            <p className="mt-1.5 text-xs text-rose-200/80 leading-relaxed">
-              This link was set to <span className="font-bold text-white">burn on read</span>. It has been permanently purged from memory and cannot be accessed again.
+            <p className="mt-1.5 text-xs text-rose-900/80 dark:text-rose-200/80 leading-relaxed">
+              This link was configured to <span className="font-bold text-rose-950 dark:text-white">burn on read</span>. It has been permanently purged from memory and cannot be reloaded.
             </p>
           </div>
 
           {/* Countdown Display */}
           <div className="py-2">
-            <div className="text-4xl sm:text-5xl font-black font-mono tracking-wider text-rose-400 animate-pulse">
+            <div className="text-4xl sm:text-5xl font-black font-mono tracking-wider text-rose-600 dark:text-rose-400">
               {burnCountdown}
             </div>
-            <p className="text-[10px] text-rose-300/70 mt-1 uppercase font-mono tracking-wider">
+            <p className="text-[10px] text-rose-700/80 dark:text-rose-300/70 mt-1 uppercase font-mono tracking-wider">
               Seconds until automated redirect
             </p>
           </div>
@@ -281,9 +296,78 @@ export const RedirectPage: React.FC = () => {
               <span>Open Target Destination</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
-            <div className="text-[10px] font-mono text-slate-400 truncate">
-              Target: <code className="text-slate-300">{destinationUrl}</code>
+            <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 truncate">
+              Target: <code className="text-slate-700 dark:text-slate-300">{destinationUrl}</code>
             </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Safe Burn Confirmation Gate for Unprotected Single-View Links
+  if (metadata && !metadata.protected && (metadata.max_views === 1 || metadata.views_remaining === 1)) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 animate-fade-in">
+        <SEO
+          title="Safe Burn Confirmation"
+          description="Confirm to unlock and incinerate single-view secret."
+          noIndex={true}
+        />
+        <div className="stealth-card rounded-2xl p-6 sm:p-8 border border-slate-200/90 dark:border-white/10 text-center space-y-6">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-sm">
+            <Flame className="w-7 h-7" />
+          </div>
+
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-[10px] font-mono font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400 mb-2">
+              <Flame className="w-3 h-3 text-rose-500" />
+              <span>Burn-on-Read Secret</span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+              One-Time View Vault
+            </h1>
+            <p className="mt-1.5 text-xs text-slate-500 dark:text-zinc-400 leading-relaxed max-w-xs mx-auto font-mono">
+              This secret will be permanently incinerated from memory the moment it is revealed.
+            </p>
+          </div>
+
+          {errorMessage && (
+            <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 flex items-start gap-2 text-rose-700 dark:text-rose-300 text-xs animate-fade-in font-mono text-left">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <div>{errorMessage}</div>
+            </div>
+          )}
+
+          <div className="pt-2">
+            <SlideToReveal
+              isUnlocking={unlocking}
+              disabled={unlocking}
+              onConfirm={async () => {
+                if (!slug) return;
+                try {
+                  setUnlocking(true);
+                  setErrorMessage(null);
+                  const res = await unlockLink(slug, '');
+                  await processPayload(res.url, !!res.burned);
+                } catch (err: unknown) {
+                  if (
+                    (err instanceof ApiError && err.status === 404) ||
+                    (err instanceof Error && (err.message.toLowerCase().includes('not found') || err.message.toLowerCase().includes('expired')))
+                  ) {
+                    setNotFound(true);
+                    return;
+                  }
+                  if (err instanceof Error) {
+                    setErrorMessage(err.message);
+                  } else {
+                    setErrorMessage('Failed to unlock secret.');
+                  }
+                } finally {
+                  setUnlocking(false);
+                }
+              }}
+            />
           </div>
         </div>
       </div>

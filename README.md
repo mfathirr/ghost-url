@@ -21,12 +21,13 @@
 
 ## 📖 Overview
 
-**GhostURL** is an account-less, privacy-first web utility combining four core capabilities into a cohesive interface:
+**GhostURL** is an account-less, privacy-first web utility combining five core capabilities into a cohesive interface:
 
 1. **⚡ Disappearing Links (Quick Bridge)**: Short links that self-destruct after a specified duration using native Redis hardware/memory TTL eviction, with optional single-use self-destruct view limits and salted **bcrypt** passcodes.
 2. **📝 Secret Notes (Zero-Knowledge E2EE)**: End-to-end encrypted notes, passwords, and code snippets with PrismJS syntax highlighting. Encrypted directly in the browser via AES-256-GCM; the decryption key stays inside the URL hash fragment (`#k=...`), keeping backend servers completely blind to contents.
 3. **📡 Nearby Radar (AirDrop / Snapdrop P2P Sharing)**: Instant, zero-setup local-network device discovery. Beam links, text, and messages directly between devices over encrypted **WebRTC DataChannels** without ever touching backend databases or persistent storage.
 4. **🚀 GhostDrop (Zero-Storage P2P File Beaming)**: Beam files of arbitrary size (tested up to 1.12+ GB) directly between peer browsers with dual-engine streaming (WebRTC DataChannels + WebSocket signaling relay fallback), adaptive backpressure flow control, and zero server storage.
+5. **🛡️ Anti-Crawler Defense & Duress Protections**: Automated chat crawler shielding (Slack, Discord, WhatsApp, Telegram), tactile slide-to-reveal human confirmation gate, plausible deniability duress passcode ("poison pill") that atomically vaporizes Redis keys on demand, and zero-knowledge sender delivery receipts.
 
 ---
 
@@ -36,7 +37,7 @@
 - **Native Redis TTL Expiration**: Preset durations (`5m`, `30m`, `1h`, `24h`) or custom expirations up to 7 days. Keys are evicted automatically from RAM when expired.
 - **Single-Use Self-Destruct (Burn-on-Read)**: Set view limits (`1 View`, `3 Views`, `5 Views`). When the view quota is reached, Redis atomically deletes the key, destroying the link or note forever.
 - **Client-Side Zero-Knowledge Encryption**: Destination URLs and Secret Notes can be encrypted in the browser with AES-256-GCM before dispatch. The decryption key stays strictly in the URL fragment (`#k=...`), which browsers never send to servers.
-- **Secret Notes with Syntax Highlighting**: Share code snippets and passwords safely with support for 10+ languages (JavaScript, Python, Go, Rust, Bash, SQL, JSON, Markdown, etc.) via PrismJS.
+- **Secret Notes with Syntax Highlighting**: Share code snippets and passwords safely with support for 10+ languages (JavaScript, Python, Go, Rust, Bash, SQL, JSON, Markdown, etc.) via PrismJS with full light/dark mode parity.
 - **Bcrypt Passcode Protection**: Optional secret passcodes are hashed using standard bcrypt salt rounds before persistence.
 - **Custom Slugs or Secure Random IDs**: Pick a custom vanity alias or let the Go backend allocate an 8-character cryptographically random base62 slug.
 - **Instant QR Code Generation**: In-browser client-side QR generation with preserved decryption keys, ready for immediate mobile camera scanning.
@@ -61,7 +62,13 @@
 - **File Offer Handshake**: Recipient previews incoming file name, formatted size, and type with explicit Accept or Decline options before receiving bytes.
 - **Automatic Cleanup**: Assembles `Blob` in receiver memory, prompts download, and revokes ephemeral object URLs after 60 seconds.
 
-### 🔍 4. Search & Generative Engine Optimization (SEO & GEO)
+### 🛡️ 4. Anti-Crawler Defense & Duress Protection
+- **Bot Unfurl Shield**: Chat preview crawlers (Slackbot, Discordbot, WhatsApp, Telegram, Twitterbot, Applebot) accessing `/r/:slug` receive static stealth OpenGraph HTML without decrementing view counts or triggering premature single-use burns.
+- **Tactile Safe Burn Gate (`SlideToReveal`)**: Single-use links require dragging a prominent physical slider thumb across the threshold to confirm human presence before incinerating the secret.
+- **Duress Passcode ("Poison Pill")**: Optional emergency passcode that immediately executes atomic Redis key deletion and renders an authentic 404 screen for plausible deniability under coercion.
+- **Zero-Knowledge Delivery Status Receipt**: Senders receive a private audit URL (`/status/:slug#token=...`) allowing them to track creation, access, and destruction UTC state transitions without recording recipient IP addresses or personal data.
+
+### 🔍 5. Search & Generative Engine Optimization (SEO & GEO)
 - **Dynamic Mode-Based Metadata**: Real-time title, description, and keyword pivoting for Disappearing Links, Secret Notes, and File Beaming.
 - **Zero-Dependency React 19 Head Sync**: Native tag hoisting with dynamic fallback synchronization for canonical links, keywords, and Open Graph cards.
 - **AI Discoverability (`llms.txt`)**: Machine-readable platform manifest (`/llms.txt`) providing AI agents and generative engines with accurate capability context.
@@ -228,14 +235,15 @@ npm run build
 
 | Method | Route | Description |
 |---|---|---|
-| `POST` | `/api/links` | Create an ephemeral short link or encrypted note with TTL, optional passcode, and view limit (`max_views`) |
+| `POST` | `/api/links` | Create an ephemeral short link or encrypted note with TTL, optional passcode, duress passcode, and view limit (`max_views`) |
 | `GET` | `/api/links/:slug` | Check public metadata (protection status, remaining TTL, `views_remaining`, `max_views`) without consuming views |
 | `POST` | `/api/links/:slug/unlock` | Verify passcode, atomically decrement view quota, and reveal destination URL or encrypted note (returns `burned: true` if limit reached) |
-| `GET` | `/r/:slug` | Direct 302 redirect for public links (or route to unlock form / secret note viewer) |
+| `GET` | `/api/status/:slug` | Query zero-knowledge delivery status receipt with private `token` |
+| `GET` | `/r/:slug` | Direct 302 redirect for public links (or route to unlock form / secret note viewer with bot protection) |
 | `GET` | `/health` | Health check probe verifying Redis connectivity |
 | `GET` | `/ws/p2p` | WebSocket endpoint for IP discovery & WebRTC signaling |
 
-### Example: Create Ephemeral Link with View Limits
+### Example: Create Ephemeral Link with Duress Passcode & View Limits
 ```bash
 curl -X POST http://localhost:8080/api/links \
   -H "Content-Type: application/json" \
@@ -243,6 +251,7 @@ curl -X POST http://localhost:8080/api/links \
     "url": "https://github.com/google/antigravity",
     "alias": "antigravity-guide",
     "passcode": "secret123",
+    "duress_passcode": "emergency456",
     "expires_in": "1h",
     "max_views": 1
   }'
@@ -256,7 +265,8 @@ Response:
   "expires_at": "2026-09-09T16:00:00Z",
   "ttl_seconds": 3600,
   "has_passcode": true,
-  "max_views": 1
+  "max_views": 1,
+  "status_token": "a8f9c2d1e0b345a7"
 }
 ```
 

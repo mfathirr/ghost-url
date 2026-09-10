@@ -48,6 +48,11 @@ func linkKey(slug string) string {
 	return "link:" + slug
 }
 
+// statusKey constructs the colon-separated Redis key for a delivery status receipt.
+func statusKey(slug string) string {
+	return "status:" + slug
+}
+
 // SaveLink stores the link in a Redis Hash and assigns an explicit TTL.
 func (r *RedisLinkStore) SaveLink(ctx context.Context, slug string, link *models.StoredLink, ttl time.Duration, checkCollision bool) error {
 	key := linkKey(slug)
@@ -66,6 +71,7 @@ func (r *RedisLinkStore) SaveLink(ctx context.Context, slug string, link *models
 	pipe.HSet(ctx, key, map[string]interface{}{
 		"url":           link.URL,
 		"passcode_hash": link.PasscodeHash,
+		"duress_hash":   link.DuressHash,
 		"created_at":    link.CreatedAt.Format(time.RFC3339),
 		"expires_at":    link.ExpiresAt.Format(time.RFC3339),
 		"max_views":     link.MaxViews,
@@ -115,6 +121,7 @@ func (r *RedisLinkStore) GetLink(ctx context.Context, slug string) (*models.Stor
 	link := &models.StoredLink{
 		URL:          fields["url"],
 		PasscodeHash: fields["passcode_hash"],
+		DuressHash:   fields["duress_hash"],
 		CreatedAt:    createdAt,
 		ExpiresAt:    expiresAt,
 		MaxViews:     maxViews,
@@ -144,6 +151,95 @@ func (r *RedisLinkStore) IncrementAndCheckViews(ctx context.Context, slug string
 
 	remaining := maxViews - int(count)
 	return remaining, false, nil
+}
+
+// DeleteLink immediately and permanently purges a link from storage.
+func (r *RedisLinkStore) DeleteLink(ctx context.Context, slug string) error {
+	key := linkKey(slug)
+	return r.client.Del(ctx, key).Err()
+}
+
+// SaveDeliveryStatus records the initial pending delivery receipt for a link.
+func (r *RedisLinkStore) SaveDeliveryStatus(ctx context.Context, slug string, tokenHash string, ttl time.Duration) error {
+	key := statusKey(slug)
+	now := time.Now().UTC()
+	expiresAt := now.Add(ttl)
+
+	pipe := r.client.TxPipeline()
+	pipe.HSet(ctx, key, map[string]interface{}{
+		"token_hash": tokenHash,
+		"status":     "pending",
+		"created_at": now.Format(time.RFC3339),
+		"expires_at": expiresAt.Format(time.RFC3339),
+		"viewed_at":  "",
+		"burned_at":  "",
+	})
+	// Keep status key for link TTL plus a 24-hour audit retention window
+	pipe.Expire(ctx, key, ttl+24*time.Hour)
+
+	if _, err := pipe.Exec(ctx); err != nil {
+		return fmt.Errorf("save delivery status: %w", err)
+	}
+	return nil
+}
+
+// UpdateDeliveryStatus records view or burn events for a delivery receipt.
+func (r *RedisLinkStore) UpdateDeliveryStatus(ctx context.Context, slug string, status string, isBurned bool) error {
+	key := statusKey(slug)
+	nowStr := time.Now().UTC().Format(time.RFC3339)
+
+	fields := map[string]interface{}{
+		"status": status,
+	}
+	if status == "viewed" || status == "burned" {
+		fields["viewed_at"] = nowStr
+	}
+	if isBurned {
+		fields["status"] = "burned"
+		fields["burned_at"] = nowStr
+	}
+
+	return r.client.HSet(ctx, key, fields).Err()
+}
+
+// GetDeliveryStatus retrieves the status receipt and token hash for audit verification.
+func (r *RedisLinkStore) GetDeliveryStatus(ctx context.Context, slug string) (*models.StatusReceipt, string, error) {
+	key := statusKey(slug)
+	fields, err := r.client.HGetAll(ctx, key).Result()
+	if err != nil {
+		return nil, "", fmt.Errorf("read delivery status: %w", err)
+	}
+	if len(fields) == 0 {
+		return nil, "", ErrLinkNotFound
+	}
+
+	createdAt, _ := time.Parse(time.RFC3339, fields["created_at"])
+	expiresAt, _ := time.Parse(time.RFC3339, fields["expires_at"])
+
+	var viewedAt *time.Time
+	if val, ok := fields["viewed_at"]; ok && val != "" {
+		if t, err := time.Parse(time.RFC3339, val); err == nil {
+			viewedAt = &t
+		}
+	}
+
+	var burnedAt *time.Time
+	if val, ok := fields["burned_at"]; ok && val != "" {
+		if t, err := time.Parse(time.RFC3339, val); err == nil {
+			burnedAt = &t
+		}
+	}
+
+	receipt := &models.StatusReceipt{
+		Slug:      slug,
+		Status:    fields["status"],
+		CreatedAt: createdAt,
+		ExpiresAt: expiresAt,
+		ViewedAt:  viewedAt,
+		BurnedAt:  burnedAt,
+	}
+
+	return receipt, fields["token_hash"], nil
 }
 
 // Exists checks if a slug exists and is active.

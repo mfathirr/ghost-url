@@ -262,19 +262,18 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
                 <div className="space-y-3">
                   {/* Video preview or QuickTime format card */}
                   {(isAppleQuickTime && isIOS) || videoError ? (
-                    <div className="rounded-2xl p-4 bg-slate-900/95 dark:bg-slate-950 border border-slate-700/60 flex flex-col items-center justify-center text-center gap-2.5 py-6 shadow-inner relative overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-b from-rose-500/10 via-transparent to-transparent pointer-events-none" />
-                      <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 shadow-sm relative z-10">
+                    <div className="rounded-2xl p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-center gap-2.5 py-6 shadow-inner relative overflow-hidden">
+                      <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-500 dark:text-rose-400 shadow-sm relative z-10">
                         <Film className="w-6 h-6" />
                       </div>
                       <div className="space-y-1 relative z-10">
-                        <div className="text-xs font-semibold text-white flex items-center justify-center gap-1.5">
+                        <div className="text-xs font-semibold text-slate-900 dark:text-white flex items-center justify-center gap-1.5">
                           <span>Apple QuickTime Video</span>
-                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-rose-500/20 text-rose-300 font-mono">
+                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300 font-mono">
                             {fileName.split('.').pop()?.toUpperCase() || 'MOV'}
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-400 max-w-xs leading-relaxed">
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
                           iPhone camera recording (HEVC &amp; uncompressed audio). Saved to device for native Photos playback.
                         </p>
                       </div>
@@ -391,16 +390,16 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
               <button
                 type="button"
                 onClick={handleSaveFile}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm text-white shadow-md transition-all duration-200 active:scale-95 ${
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-all duration-200 active:-translate-y-[1px] ${
                   saved
-                    ? 'bg-emerald-600 shadow-emerald-500/20'
-                    : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/20'
+                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                    : 'bg-emerald-500 hover:bg-emerald-400 text-black'
                 }`}
               >
                 {saved ? (
                   <>
                     <Check className="w-4 h-4" />
-                    <span>Saved to Device!</span>
+                    <span>Saved to Device</span>
                   </>
                 ) : (
                   <>
@@ -412,7 +411,7 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
               <button
                 type="button"
                 onClick={onDismiss}
-                className="py-3 px-4 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors"
+                className="py-2.5 px-4 rounded-lg text-xs font-mono font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
               >
                 {saved ? 'Close' : 'Dismiss'}
               </button>
@@ -457,21 +456,21 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
               <button
                 type="button"
                 onClick={handleCopy}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm border transition-all duration-200 ${
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-mono font-bold text-xs uppercase tracking-wider border shadow-sm transition-all duration-200 active:-translate-y-[1px] ${
                   copied
-                    ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700 text-emerald-600 dark:text-emerald-300'
-                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-white'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300'
+                    : 'border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 text-slate-800 dark:text-white'
                 }`}
               >
                 {copied ? (
                   <>
                     <Check className="w-4 h-4 text-emerald-500" />
-                    <span>Copied!</span>
+                    <span>Copied</span>
                   </>
                 ) : (
                   <>
                     <Copy className="w-4 h-4" />
-                    <span>Copy Link</span>
+                    <span>Copy Content</span>
                   </>
                 )}
               </button>
@@ -479,7 +478,7 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
               <button
                 type="button"
                 onClick={handleDecline}
-                className="py-3 px-3 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors"
+                className="py-2.5 px-4 rounded-lg text-xs font-mono font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
               >
                 Decline
               </button>

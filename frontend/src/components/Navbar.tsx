@@ -8,7 +8,7 @@ export const Navbar: React.FC = () => {
     <header className="sticky top-0 z-50 backdrop-blur-md bg-white/80 dark:bg-[#090d12]/85 border-b border-slate-200/80 dark:border-white/5 transition-colors">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <Link to="/" aria-label="GhostURL homepage" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 rounded-lg bg-slate-900 dark:bg-black border border-slate-700/60 dark:border-zinc-800 flex items-center justify-center text-emerald-400 shadow-sm group-hover:border-emerald-500/40 transition-colors">
+          <div className="w-9 h-9 rounded-lg bg-emerald-500/10 dark:bg-black border border-emerald-500/20 dark:border-zinc-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-sm group-hover:border-emerald-500/40 transition-colors">
             <Ghost className="w-4 h-4" aria-hidden="true" />
           </div>
           <div>

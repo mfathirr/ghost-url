@@ -14,6 +14,7 @@ import {
   Lock,
   Flame,
   FileText,
+  FileCheck2,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useP2PContext } from '../context/P2PContext';
@@ -33,6 +34,7 @@ interface CreatedState {
   content_type?: 'url' | 'note';
   note_language?: string;
   max_views?: number;
+  status_token?: string;
 }
 
 export const CreatedPage: React.FC = () => {
@@ -41,6 +43,7 @@ export const CreatedPage: React.FC = () => {
   const state = location.state as CreatedState | null;
 
   const [copied, setCopied] = useState(false);
+  const [receiptCopied, setReceiptCopied] = useState(false);
   const [secondsRemaining, setSecondsRemaining] = useState<number>(() => {
     if (!state?.expires_at) return 0;
     const diff = Math.max(0, Math.floor((new Date(state.expires_at).getTime() - Date.now()) / 1000));
@@ -63,6 +66,26 @@ export const CreatedPage: React.FC = () => {
     if (!state) {
       navigate('/', { replace: true });
       return;
+    }
+
+    // Save to local receipts storage if status_token present
+    if (state.status_token) {
+      try {
+        const stored = localStorage.getItem('ghost_receipts');
+        const list = stored ? JSON.parse(stored) : [];
+        if (!list.some((item: { slug: string }) => item.slug === state.slug)) {
+          list.unshift({
+            slug: state.slug,
+            status_token: state.status_token,
+            created_at: new Date().toISOString(),
+            expires_at: state.expires_at,
+            content_type: state.content_type || 'url',
+          });
+          localStorage.setItem('ghost_receipts', JSON.stringify(list.slice(0, 25)));
+        }
+      } catch {
+        // ignore
+      }
     }
 
     const interval = setInterval(() => {
@@ -292,6 +315,58 @@ export const CreatedPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Zero-Knowledge Delivery Status Receipt Box */}
+        {state.status_token && (
+          <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 dark:bg-emerald-950/20 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                <FileCheck2 className="w-4 h-4 text-emerald-500" />
+                <span>Zero-Knowledge Delivery Receipt</span>
+              </div>
+              <Link
+                to={`/status/${state.slug}#token=${state.status_token}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-mono text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 font-semibold"
+              >
+                <span>Live Receipt &rarr;</span>
+              </Link>
+            </div>
+            <p className="text-[11px] font-mono text-slate-500 dark:text-zinc-400 leading-relaxed">
+              Track whether your recipient opened or burned this secret without recording their IP address or personal data.
+            </p>
+            <div className="flex items-center gap-2 pt-1">
+              <div className="flex-1 px-3 py-1.5 rounded-lg border border-emerald-500/20 bg-white/60 dark:bg-black/50 text-[11px] font-mono text-slate-600 dark:text-emerald-300/90 truncate select-all">
+                {`${window.location.origin}/status/${state.slug}#token=${state.status_token}`}
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  const auditUrl = `${window.location.origin}/status/${state.slug}#token=${state.status_token}`;
+                  const ok = await copyToClipboard(auditUrl);
+                  if (ok) {
+                    setReceiptCopied(true);
+                    setTimeout(() => setReceiptCopied(false), 2000);
+                  }
+                }}
+                className="px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-mono text-[11px] font-bold uppercase tracking-wider transition-colors flex items-center gap-1 shrink-0"
+              >
+                {receiptCopied ? (
+                  <>
+                    <Check className="w-3 h-3" />
+                    <span>Copied</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3" />
+                    <span>Copy Receipt Link</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* QR Code Section */}
         <div className="border-t border-slate-200/70 dark:border-zinc-800 pt-4">

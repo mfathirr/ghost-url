@@ -32,6 +32,18 @@ type LinkStore interface {
 	// Returns remaining views (-1 if unlimited), whether it was burned, and error.
 	IncrementAndCheckViews(ctx context.Context, slug string, maxViews int) (viewsRemaining int, burned bool, err error)
 
+	// DeleteLink immediately and permanently purges a link from storage.
+	DeleteLink(ctx context.Context, slug string) error
+
+	// SaveDeliveryStatus records the initial pending delivery receipt for a link.
+	SaveDeliveryStatus(ctx context.Context, slug string, tokenHash string, ttl time.Duration) error
+
+	// UpdateDeliveryStatus records view or burn events for a delivery receipt.
+	UpdateDeliveryStatus(ctx context.Context, slug string, status string, isBurned bool) error
+
+	// GetDeliveryStatus retrieves the status receipt and token hash for audit verification.
+	GetDeliveryStatus(ctx context.Context, slug string) (*models.StatusReceipt, string, error)
+
 	// Ping checks health of the storage connection.
 	Ping(ctx context.Context) error
 

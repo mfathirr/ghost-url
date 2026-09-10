@@ -40,12 +40,12 @@ var (
 	ErrInvalidTTL = errors.New("invalid expiration time; must be between 1 minute and 7 days")
 )
 
-// GenerateRandomSlug generates a cryptographically secure 8-character alphanumeric string.
-func GenerateRandomSlug() (string, error) {
-	bytes := make([]byte, slugLength)
+// GenerateSecureToken generates a cryptographically secure alphanumeric token of the specified length.
+func GenerateSecureToken(length int) (string, error) {
+	bytes := make([]byte, length)
 	charsetLen := big.NewInt(int64(len(charset)))
 
-	for i := 0; i < slugLength; i++ {
+	for i := 0; i < length; i++ {
 		n, err := rand.Int(rand.Reader, charsetLen)
 		if err != nil {
 			return "", fmt.Errorf("generate random byte: %w", err)
@@ -54,6 +54,11 @@ func GenerateRandomSlug() (string, error) {
 	}
 
 	return string(bytes), nil
+}
+
+// GenerateRandomSlug generates a cryptographically secure 8-character alphanumeric string.
+func GenerateRandomSlug() (string, error) {
+	return GenerateSecureToken(slugLength)
 }
 
 // ValidateAlias checks whether a custom alias is valid and not reserved.

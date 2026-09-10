@@ -9,6 +9,7 @@ import { Analytics } from '@vercel/analytics/react';
 const CreatePage = lazy(() => import('./pages/CreatePage'));
 const CreatedPage = lazy(() => import('./pages/CreatedPage'));
 const RedirectPage = lazy(() => import('./pages/RedirectPage'));
+const StatusPage = lazy(() => import('./pages/StatusPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 const AppContent: React.FC = () => {
@@ -29,6 +30,7 @@ const AppContent: React.FC = () => {
             <Route path="/" element={<CreatePage />} />
             <Route path="/created" element={<CreatedPage />} />
             <Route path="/r/:slug" element={<RedirectPage />} />
+            <Route path="/status/:slug" element={<StatusPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>

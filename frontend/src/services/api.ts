@@ -1,4 +1,4 @@
-import type { CreateLinkPayload, CreateLinkResponse, LinkMetadata, UnlockResponse } from '../types';
+import type { CreateLinkPayload, CreateLinkResponse, LinkMetadata, UnlockResponse, StatusReceipt } from '../types';
 
 function getApiBase(): string {
   let base = import.meta.env.VITE_API_BASE_URL || '/api';
@@ -12,6 +12,15 @@ function getApiBase(): string {
 
 const API_BASE = getApiBase();
 
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     let errorMsg = `Request failed with status ${res.status}`;
@@ -23,7 +32,7 @@ async function handleResponse<T>(res: Response): Promise<T> {
     } catch {
       // Non-JSON response fallback
     }
-    throw new Error(errorMsg);
+    throw new ApiError(errorMsg, res.status);
   }
   return res.json() as Promise<T>;
 }
@@ -58,4 +67,14 @@ export async function unlockLink(slug: string, passcode: string): Promise<Unlock
     body: JSON.stringify({ passcode }),
   });
   return handleResponse<UnlockResponse>(res);
+}
+
+export async function getDeliveryStatus(slug: string, token: string): Promise<StatusReceipt> {
+  const res = await fetch(`${API_BASE}/status/${encodeURIComponent(slug)}?token=${encodeURIComponent(token)}`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
+  return handleResponse<StatusReceipt>(res);
 }

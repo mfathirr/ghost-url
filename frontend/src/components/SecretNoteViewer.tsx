@@ -18,7 +18,6 @@ import 'prismjs/components/prism-sql';
 import 'prismjs/components/prism-markdown';
 import 'prismjs/components/prism-go';
 import 'prismjs/components/prism-rust';
-import 'prismjs/themes/prism-tomorrow.css';
 import { copyToClipboard } from '../utils/clipboard';
 
 interface SecretNoteViewerProps {
@@ -130,22 +129,22 @@ export const SecretNoteViewer: React.FC<SecretNoteViewerProps> = ({
     <div className="w-full max-w-3xl mx-auto space-y-5 animate-fade-in">
       {/* Burned Warning Banner */}
       {burned && (
-        <div className="p-4 rounded-xl bg-rose-950/80 border border-rose-500/40 text-white shadow-lg animate-fade-in">
+        <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/80 border border-rose-200 dark:border-rose-500/40 text-slate-900 dark:text-white shadow-sm animate-fade-in font-sans">
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-rose-500/20 border border-rose-400/40 flex items-center justify-center text-rose-400 shrink-0">
-              <Flame className="w-4 h-4 animate-pulse" />
+            <div className="w-8 h-8 rounded-lg bg-rose-500/10 dark:bg-rose-500/20 border border-rose-300 dark:border-rose-400/40 flex items-center justify-center text-rose-500 dark:text-rose-400 shrink-0">
+              <Flame className="w-4 h-4" />
             </div>
             <div className="flex-1">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-rose-200">
+                <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-rose-800 dark:text-rose-200">
                   Self-Destruct Triggered: Secret Erased
                 </h3>
-                <span className="text-[10px] font-mono font-bold bg-rose-500/30 border border-rose-400/40 px-2 py-0.5 rounded text-rose-200">
+                <span className="text-[10px] font-mono font-bold bg-rose-100 dark:bg-rose-500/30 border border-rose-200 dark:border-rose-400/40 px-2 py-0.5 rounded text-rose-800 dark:text-rose-200">
                   {countdown > 0 ? `${countdown}s view window` : 'Permanently Erased'}
                 </span>
               </div>
-              <p className="mt-1 text-xs text-rose-200/90 leading-relaxed">
-                This was a single-use self-destructing secret note. It has been permanently purged from backend memory. Once you navigate away or close this tab, this secret cannot be viewed again.
+              <p className="mt-1 text-xs text-rose-700 dark:text-rose-200/90 leading-relaxed">
+                This was a single-use self-destructing secret note. It has been permanently purged from memory. Once you navigate away or close this tab, this secret cannot be viewed again.
               </p>
             </div>
           </div>
@@ -211,15 +210,15 @@ export const SecretNoteViewer: React.FC<SecretNoteViewerProps> = ({
         </div>
 
         {/* Code / Text Viewer */}
-        <div className="mt-4 rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-800 bg-[#0c0f14] relative text-xs sm:text-sm">
+        <div className="mt-4 rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-800 bg-slate-50/80 dark:bg-[#0c0f14] relative text-xs sm:text-sm shadow-inner">
           <div className="max-h-[500px] overflow-auto p-4 font-mono leading-relaxed">
             {highlightedCode ? (
               <pre
-                className="!m-0 !p-0 !bg-transparent text-slate-100 selection:bg-emerald-500/30"
+                className="!m-0 !p-0 !bg-transparent text-slate-800 dark:text-slate-100 selection:bg-emerald-500/20"
                 dangerouslySetInnerHTML={{ __html: highlightedCode }}
               />
             ) : (
-              <pre className="!m-0 !p-0 !bg-transparent text-slate-100 whitespace-pre-wrap break-words">
+              <pre className="!m-0 !p-0 !bg-transparent text-slate-800 dark:text-slate-100 whitespace-pre-wrap break-words selection:bg-emerald-500/20">
                 {content}
               </pre>
             )}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   Link as LinkIcon,
   Clock,
@@ -19,6 +19,10 @@ import {
   Code2,
   Cpu,
   ArrowUpRight,
+  ShieldAlert,
+  FileCheck2,
+  X,
+  Trash2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { createLink } from '../services/api';
@@ -56,6 +60,9 @@ const HOME_JSON_LD = {
       featureList: [
         'Self-destructing short links with automatic expiration timers',
         'Burn-on-Read single-view links and secret notes that disappear after 1 open',
+        'Anti-crawler bot defense preventing social chat previews from burning secrets',
+        'Duress passcode poison pill for plausible deniability under coercion',
+        'Zero-knowledge cryptographic delivery receipts verifying view and burn events',
         'End-to-end encrypted secret notes for passwords and sensitive code snippets',
         'Zero-knowledge encryption where secret keys never touch backend servers',
         'Optional password protection for shared links and notes',
@@ -73,6 +80,22 @@ const HOME_JSON_LD = {
           acceptedAnswer: {
             '@type': 'Answer',
             text: 'A Burn-on-Read link is a one-time link that permanently erases itself the instant it is opened. Once the recipient views it, the record is wiped and cannot be accessed again.',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: 'How does the Anti-Crawler Bot Shield protect single-use secrets?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'When you share a link on Slack, Discord, WhatsApp, or Telegram, automated preview crawlers visit the URL. GhostURL detects preview bots and serves harmless metadata without incinerating the secret, requiring a human Slide-to-Reveal confirmation before revealing content.',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: 'What is a Duress Passcode (Poison Pill)?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'A secondary passcode you configure when creating a link. If coerced or forced to unlock a link, entering this alternate code purges the link immediately and shows an expired 404 page, ensuring plausible deniability.',
           },
         },
         {
@@ -131,7 +154,19 @@ export const CreatePage: React.FC = () => {
   const [alias, setAlias] = useState('');
   const [passcode, setPasscode] = useState('');
   const [showPasscode, setShowPasscode] = useState(false);
+  const [duressPasscode, setDuressPasscode] = useState('');
+  const [showDuress, setShowDuress] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showReceiptsModal, setShowReceiptsModal] = useState(false);
+  const [storedReceipts, setStoredReceipts] = useState<Array<{ slug: string; status_token: string; created_at: string; expires_at: string; content_type: string }>>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const stored = localStorage.getItem('ghost_receipts');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
 
   // TTL states
   const [expiryOption, setExpiryOption] = useState<string>('1h');
@@ -264,6 +299,7 @@ export const CreatePage: React.FC = () => {
         ttl_seconds: ttl,
         alias: alias.trim() ? alias.trim() : undefined,
         passcode: passcode.trim() ? passcode.trim() : undefined,
+        duress_passcode: duressPasscode.trim() ? duressPasscode.trim() : undefined,
         max_views: viewLimit > 0 ? viewLimit : undefined,
       };
 
@@ -277,6 +313,7 @@ export const CreatePage: React.FC = () => {
           ttl_seconds: result.ttl_seconds,
           has_passcode: result.has_passcode,
           max_views: result.max_views,
+          status_token: result.status_token,
           original_url: mode === 'link' ? trimmedUrl : undefined,
           original_note: mode === 'paste' ? noteContent : undefined,
           fragment_key: fragmentKey || undefined,
@@ -328,12 +365,12 @@ export const CreatePage: React.FC = () => {
         {/* Left Column: Technical Readout & Mode Switcher */}
         <div className="lg:col-span-5 pt-2">
           {/* Telemetry Status Pill */}
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-slate-900/90 dark:bg-black border border-slate-800 dark:border-zinc-800 text-[11px] font-mono text-slate-300 dark:text-zinc-300 mb-5 shadow-sm">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-[11px] font-mono text-slate-700 dark:text-zinc-300 mb-5 shadow-sm">
             <span className="relative flex h-2 w-2">
               <span className="animate-radar-sweep absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
             </span>
-            <span className="font-semibold text-emerald-400">P2P RADAR:</span>
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">P2P RADAR:</span>
             <span>
               {wsStatus === 'connected'
                 ? `${peers.length} PEER${peers.length !== 1 ? 'S' : ''} ONLINE`
@@ -662,6 +699,39 @@ export const CreatePage: React.FC = () => {
                               </div>
                             </div>
 
+                            {/* Duress Passcode ("Poison Pill") */}
+                            <div>
+                              <div className="flex items-center justify-between mb-1.5">
+                                <label htmlFor="duress-input" className="block text-xs font-mono uppercase tracking-wider text-rose-700 dark:text-rose-400 font-semibold">
+                                  Duress Passcode ("Poison Pill")
+                                </label>
+                                <span className="text-[10px] font-mono text-slate-500 dark:text-zinc-400">Anti-coercion</span>
+                              </div>
+                              <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-rose-500">
+                                  <ShieldAlert className="w-3.5 h-3.5" />
+                                </div>
+                                <input
+                                  id="duress-input"
+                                  type={showDuress ? 'text' : 'password'}
+                                  value={duressPasscode}
+                                  onChange={(e) => setDuressPasscode(e.target.value)}
+                                  placeholder="Secondary code to purge data if coerced"
+                                  className="w-full pl-9 pr-10 py-2 rounded-lg border border-rose-300 dark:border-rose-900/50 bg-rose-50/70 dark:bg-rose-950/20 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-rose-500 text-xs font-mono"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowDuress(!showDuress)}
+                                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-rose-500 hover:text-rose-600 dark:hover:text-rose-400"
+                                >
+                                  {showDuress ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                </button>
+                              </div>
+                              <p className="mt-1 text-[10px] text-slate-500 dark:text-zinc-400 font-mono">
+                                If entered at unlock, this code immediately purges the link and displays a 404 page for plausible deniability.
+                              </p>
+                            </div>
+
                             {/* Custom Alias */}
                             <div>
                               <label htmlFor="alias-input" className="block text-xs font-mono uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
@@ -701,6 +771,20 @@ export const CreatePage: React.FC = () => {
                       </>
                     )}
                   </button>
+
+                  {/* Recent Receipts Tray Trigger */}
+                  {storedReceipts.length > 0 && (
+                    <div className="pt-2 text-center">
+                      <button
+                        type="button"
+                        onClick={() => setShowReceiptsModal(true)}
+                        className="inline-flex items-center gap-1.5 text-xs font-mono text-zinc-500 hover:text-emerald-500 dark:text-zinc-400 dark:hover:text-emerald-400 transition-colors"
+                      >
+                        <FileCheck2 className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>Recent Delivery Receipts ({storedReceipts.length})</span>
+                      </button>
+                    </div>
+                  )}
                 </form>
               </div>
             ) : (
@@ -960,14 +1044,113 @@ export const CreatePage: React.FC = () => {
 
           <div className="pt-4 md:pt-0">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1.5">
+              How does the Anti-Crawler Bot Shield work?
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              When links are shared on Slack, Discord, or WhatsApp, automated crawlers fetch links to render preview cards. For single-use links, GhostURL returns a static preview without counting as a view, and requires a human Slide-to-Reveal confirmation before incinerating the secret.
+            </p>
+          </div>
+
+          <div className="pt-4 md:pt-0">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1.5">
+              What is a Duress Passcode ("Poison Pill")?
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              If forced to unlock a link under coercion, you can enter your pre-configured duress passcode instead of your primary password. GhostURL purges the link immediately and displays a 404 expired screen for plausible deniability.
+            </p>
+          </div>
+
+          <div className="pt-4 md:pt-0">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1.5">
               How does GhostDrop beam files without cloud storage?
             </h3>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              GhostDrop connects devices directly over your local Wi-Fi network using WebRTC DataChannels. Files stream from one device's browser memory directly into another device's browser memory, completely bypassing cloud drives, servers, and databases.
+              GhostDrop connects devices directly over your local network using WebRTC DataChannels. Files stream from one device's browser memory directly into another device's browser memory, completely bypassing cloud drives, servers, and databases.
             </p>
           </div>
         </div>
       </section>
+
+      {/* Recent Receipts Modal */}
+      <AnimatePresence>
+        {showReceiptsModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="w-full max-w-lg rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-2xl overflow-hidden p-6 space-y-4"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-zinc-800">
+                <div className="flex items-center gap-2">
+                  <FileCheck2 className="w-5 h-5 text-emerald-500" />
+                  <h3 className="font-bold text-sm text-slate-900 dark:text-white font-mono uppercase tracking-wider">
+                    Recent Delivery Receipts
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowReceiptsModal(false)}
+                  className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="max-h-80 overflow-y-auto space-y-2.5 pr-1">
+                {storedReceipts.length === 0 ? (
+                  <p className="text-center py-6 text-xs text-slate-500 dark:text-zinc-500 font-mono">
+                    No receipts recorded yet. Receipts are generated when you create links or notes.
+                  </p>
+                ) : (
+                  storedReceipts.map((rec) => (
+                    <div
+                      key={rec.slug}
+                      className="p-3 rounded-xl border border-slate-200/80 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/40 flex items-center justify-between gap-3 text-xs font-mono"
+                    >
+                      <div className="truncate">
+                        <div className="font-bold text-slate-900 dark:text-white truncate">
+                          slug: <span className="text-emerald-500">{rec.slug}</span>
+                        </div>
+                        <div className="text-[11px] text-slate-400 dark:text-zinc-500">
+                          {new Date(rec.created_at).toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Link
+                          to={`/status/${rec.slug}#token=${rec.status_token}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider text-[10px] transition-colors"
+                        >
+                          Check Status &rarr;
+                        </Link>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {storedReceipts.length > 0 && (
+                <div className="pt-3 border-t border-slate-200 dark:border-zinc-800 flex justify-between items-center text-[11px] font-mono text-zinc-400">
+                  <span>Saved locally in your browser</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      localStorage.removeItem('ghost_receipts');
+                      setStoredReceipts([]);
+                    }}
+                    className="text-rose-500 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    <span>Clear History</span>
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

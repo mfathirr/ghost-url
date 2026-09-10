@@ -4,6 +4,7 @@ Disallow: /api/
 Disallow: /ws/
 Disallow: /r/
 Disallow: /created
+Disallow: /status/
 
 # AI Crawlers & Assistants
 User-agent: GPTBot
@@ -12,6 +13,7 @@ Disallow: /api/
 Disallow: /ws/
 Disallow: /r/
 Disallow: /created
+Disallow: /status/
 
 User-agent: ClaudeBot
 Allow: /
@@ -19,6 +21,7 @@ Disallow: /api/
 Disallow: /ws/
 Disallow: /r/
 Disallow: /created
+Disallow: /status/
 
 User-agent: PerplexityBot
 Allow: /
@@ -26,6 +29,7 @@ Disallow: /api/
 Disallow: /ws/
 Disallow: /r/
 Disallow: /created
+Disallow: /status/
 
 User-agent: Google-Extended
 Allow: /
@@ -33,6 +37,7 @@ Disallow: /api/
 Disallow: /ws/
 Disallow: /r/
 Disallow: /created
+Disallow: /status/
 
 User-agent: Applebot-Extended
 Allow: /
@@ -40,5 +45,7 @@ Disallow: /api/
 Disallow: /ws/
 Disallow: /r/
 Disallow: /created
+Disallow: /status/
 
 Sitemap: https://www.ghosturl.web.id/sitemap.xml
+

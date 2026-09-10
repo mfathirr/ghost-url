@@ -20,7 +20,7 @@ export function getDeviceIcon(os: string, deviceType: string) {
 
 export interface PeerAvatarWithProgressProps {
   peer: PeerInfo;
-  progress: number | null; // 0–100 or null
+  progress: number | null; // 0-100 or null
   isSent?: boolean;
   isSending?: boolean;
   disabled?: boolean;

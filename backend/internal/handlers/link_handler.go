@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -15,6 +16,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
+
+// botUserAgentRegex matches common link-previewing bots and scrapers from chat and social networks.
+var botUserAgentRegex = regexp.MustCompile(`(?i)(bot|crawler|spider|slack|discord|whatsapp|telegram|twitter|facebookexternalhit|meta-externalagent|applebot|skypeuripreview|linkedinbot)`)
 
 // LinkHandler holds dependencies for HTTP route handling.
 type LinkHandler struct {
@@ -105,12 +109,48 @@ func (h *LinkHandler) CreateLink(c *gin.Context) {
 		passcodeHash = string(hashed)
 	}
 
+	var duressHash string
+	trimmedDuress := strings.TrimSpace(req.DuressPasscode)
+	if trimmedDuress != "" {
+		if trimmedPasscode == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "A primary passcode must be set before configuring a duress passcode"})
+			return
+		}
+		if trimmedDuress == trimmedPasscode {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Duress passcode must be different from primary passcode"})
+			return
+		}
+		if len(trimmedDuress) < 3 || len(trimmedDuress) > 72 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Duress passcode must be between 3 and 72 characters"})
+			return
+		}
+		hashedDuress, err := bcrypt.GenerateFromPassword([]byte(trimmedDuress), bcrypt.DefaultCost)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to secure duress passcode"})
+			return
+		}
+		duressHash = string(hashedDuress)
+	}
+
+	// Generate a zero-knowledge status receipt token for the sender
+	statusToken, err := utils.GenerateSecureToken(16)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate receipt token"})
+		return
+	}
+	statusTokenHash, err := bcrypt.GenerateFromPassword([]byte(statusToken), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to secure receipt token"})
+		return
+	}
+
 	now := time.Now().UTC()
 	expiresAt := now.Add(ttl)
 
 	stored := &models.StoredLink{
 		URL:          validURL,
 		PasscodeHash: passcodeHash,
+		DuressHash:   duressHash,
 		CreatedAt:    now,
 		ExpiresAt:    expiresAt,
 		MaxViews:     req.MaxViews,
@@ -129,6 +169,9 @@ func (h *LinkHandler) CreateLink(c *gin.Context) {
 		return
 	}
 
+	// Save initial pending delivery receipt
+	_ = h.store.SaveDeliveryStatus(ctx, slug, string(statusTokenHash), ttl)
+
 	shortURL := fmt.Sprintf("%s/r/%s", strings.TrimRight(h.cfg.BaseURL, "/"), slug)
 
 	c.JSON(http.StatusCreated, models.CreateLinkResponse{
@@ -138,6 +181,7 @@ func (h *LinkHandler) CreateLink(c *gin.Context) {
 		TTLSeconds:  int64(ttl.Seconds()),
 		HasPasscode: passcodeHash != "",
 		MaxViews:    req.MaxViews,
+		StatusToken: statusToken,
 	})
 }
 
@@ -208,6 +252,16 @@ func (h *LinkHandler) UnlockLink(c *gin.Context) {
 		return
 	}
 
+	// If duress passcode is set, check if the entered passcode matches the duress hash
+	if link.DuressHash != "" && bcrypt.CompareHashAndPassword([]byte(link.DuressHash), []byte(req.Passcode)) == nil {
+		// Duress triggered! Atomically purge the link immediately
+		_ = h.store.DeleteLink(ctx, slug)
+		_ = h.store.UpdateDeliveryStatus(ctx, slug, "burned", true)
+		// Return 404 for plausible deniability under coercion
+		c.JSON(http.StatusNotFound, gin.H{"error": "Link not found or expired"})
+		return
+	}
+
 	// If passcode is set, verify passcode hash before burning any view
 	if link.PasscodeHash != "" {
 		if err := bcrypt.CompareHashAndPassword([]byte(link.PasscodeHash), []byte(req.Passcode)); err != nil {
@@ -223,6 +277,13 @@ func (h *LinkHandler) UnlockLink(c *gin.Context) {
 		return
 	}
 
+	// Record delivery status update
+	if burned {
+		_ = h.store.UpdateDeliveryStatus(ctx, slug, "burned", true)
+	} else {
+		_ = h.store.UpdateDeliveryStatus(ctx, slug, "viewed", false)
+	}
+
 	c.JSON(http.StatusOK, models.UnlockResponse{
 		URL:    link.URL,
 		Burned: burned,
@@ -236,6 +297,30 @@ func (h *LinkHandler) RedirectLink(c *gin.Context) {
 	slug := c.Param("slug")
 	if slug == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Slug parameter required"})
+		return
+	}
+
+	// Anti-Crawler Bot Defense:
+	// If the request comes from an automated chat or social preview crawler,
+	// respond with static HTML containing generic OpenGraph tags without mutating views or redirecting to SPA.
+	userAgent := c.GetHeader("User-Agent")
+	if botUserAgentRegex.MatchString(userAgent) {
+		c.Header("Content-Type", "text/html; charset=utf-8")
+		c.String(http.StatusOK, `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GhostURL | Ephemeral Transfer</title>
+  <meta property="og:title" content="GhostURL | Ephemeral Encrypted Transfer" />
+  <meta property="og:description" content="This link contains a self-destructing secret. Open in browser to view." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="GhostURL" />
+  <meta name="robots" content="noindex, nofollow" />
+</head>
+<body>
+  <p>Ephemeral secret link. Open in a web browser to view.</p>
+</body>
+</html>`)
 		return
 	}
 
@@ -280,6 +365,37 @@ func (h *LinkHandler) RedirectLink(c *gin.Context) {
 
 	// No passcode and no view limit: Immediate 302 redirect
 	c.Redirect(http.StatusFound, link.URL)
+}
+
+// GetDeliveryStatus handles GET /api/status/:slug?token=... to retrieve verified receipt status.
+func (h *LinkHandler) GetDeliveryStatus(c *gin.Context) {
+	slug := c.Param("slug")
+	token := c.Query("token")
+	if slug == "" || token == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Slug and token are required"})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), h.cfg.ReadTimeout)
+	defer cancel()
+
+	receipt, tokenHash, err := h.store.GetDeliveryStatus(ctx, slug)
+	if err != nil {
+		if errors.Is(err, storage.ErrLinkNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Status receipt not found or expired"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error retrieving status"})
+		return
+	}
+
+	// Verify token authenticity
+	if err := bcrypt.CompareHashAndPassword([]byte(tokenHash), []byte(token)); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid status token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, receipt)
 }
 
 // HealthCheck handles GET /health for container readiness probes.
