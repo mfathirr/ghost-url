@@ -1,6 +1,7 @@
 import React from 'react';
 import { Smartphone, Tablet, Monitor, Laptop, Check, Send } from 'lucide-react';
 import type { PeerInfo } from '../types/p2p';
+import { useTranslation } from '../hooks/useTranslation';
 
 export function getDeviceIcon(os: string, deviceType: string) {
   const lowerOS = (os || '').toLowerCase();
@@ -34,9 +35,11 @@ export const PeerAvatarWithProgress: React.FC<PeerAvatarWithProgressProps> = ({
   isSent = false,
   isSending = false,
   disabled = false,
-  actionLabel = 'Send',
+  actionLabel,
   onClick,
 }) => {
+  const { t } = useTranslation();
+  const effectiveActionLabel = actionLabel || t('dropZone.beamFile');
   const radius = 17;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset =
@@ -124,7 +127,7 @@ export const PeerAvatarWithProgress: React.FC<PeerAvatarWithProgressProps> = ({
         {isSent ? (
           <span className="inline-flex items-center gap-1 text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 animate-fade-in">
             <Check className="w-3 h-3" />
-            <span>Beamed</span>
+            <span>{t('dropZone.sent')}</span>
           </span>
         ) : isTransferring ? (
           <span className="text-xs font-bold text-emerald-500 font-mono">
@@ -134,7 +137,7 @@ export const PeerAvatarWithProgress: React.FC<PeerAvatarWithProgressProps> = ({
           <div className="w-3.5 h-3.5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
         ) : (
           <span className="inline-flex items-center gap-1 text-xs font-mono font-semibold text-emerald-600 dark:text-emerald-400 group-hover:underline">
-            <span>{actionLabel}</span>
+            <span>{effectiveActionLabel}</span>
             <Send className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
           </span>
         )}

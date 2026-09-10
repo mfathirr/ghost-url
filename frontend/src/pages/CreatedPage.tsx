@@ -22,6 +22,7 @@ import { PeerAvatarWithProgress } from '../components/PeerAvatarWithProgress';
 import type { PeerInfo } from '../types/p2p';
 import { copyToClipboard } from '../utils/clipboard';
 import { SEO } from '../components/SEO';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface CreatedState {
   slug: string;
@@ -38,6 +39,7 @@ interface CreatedState {
 }
 
 export const CreatedPage: React.FC = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state as CreatedState | null;
@@ -146,7 +148,7 @@ export const CreatedPage: React.FC = () => {
   };
 
   const formatCountdown = (totalSeconds: number): string => {
-    if (totalSeconds <= 0) return 'Expired';
+    if (totalSeconds <= 0) return t('errors.expiredOrBurned');
     const d = Math.floor(totalSeconds / 86400);
     const h = Math.floor((totalSeconds % 86400) / 3600);
     const m = Math.floor((totalSeconds % 3600) / 60);
@@ -201,12 +203,10 @@ export const CreatedPage: React.FC = () => {
           )}
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-          {state.content_type === 'note' ? 'Secret Note Sealed' : 'Ephemeral Link Generated'}
+          {t('created.title')}
         </h1>
         <p className="mt-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto">
-          {state.content_type === 'note'
-            ? 'Encrypted in your browser. The decryption key exists only in this link.'
-            : 'Configured for automatic hardware eviction. Zero persistent disk records.'}
+          {t('created.subtitle')}
         </p>
       </div>
 
@@ -219,8 +219,7 @@ export const CreatedPage: React.FC = () => {
               <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/25 flex items-start gap-2.5 text-xs font-mono text-emerald-700 dark:text-emerald-300">
                 <Lock className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-bold">E2EE ACTIVE: </span>
-                  Decryption key stored in URL fragment (#k=). Server remains completely blind to plaintext.
+                  {t('created.e2eeActiveNotice')}
                 </div>
               </div>
             )}
@@ -229,11 +228,11 @@ export const CreatedPage: React.FC = () => {
                 <Flame className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
                 <div>
                   <span className="font-bold">
-                    {state.max_views === 1 ? 'BURN-ON-READ ACTIVE: ' : `VIEW LIMIT (${state.max_views} VIEWS): `}
+                    {state.max_views === 1 ? `${t('created.burnOn1stRead').toUpperCase()}: ` : ''}
                   </span>
                   {state.max_views === 1
-                    ? 'This link will permanently self-destruct the instant it is unlocked.'
-                    : `This link will automatically self-destruct after ${state.max_views} view(s).`}
+                    ? t('created.burnNotice')
+                    : t('created.viewLimitNotice', { count: state.max_views })}
                 </div>
               </div>
             )}
@@ -243,7 +242,7 @@ export const CreatedPage: React.FC = () => {
         {/* Short URL Copy Box */}
         <div>
           <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5 font-semibold">
-            Your Private {state.content_type === 'note' ? 'Secret Note' : 'Short'} Link
+            {t('created.copyLink')}
           </label>
           <div className="flex items-center gap-2">
             <div className="flex-1 px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-black/60 text-slate-900 dark:text-emerald-300 font-mono text-xs sm:text-sm font-semibold truncate select-all">
@@ -260,12 +259,12 @@ export const CreatedPage: React.FC = () => {
               {copied ? (
                 <>
                   <Check className="w-3.5 h-3.5" />
-                  <span>Copied</span>
+                  <span>{t('created.copied')}</span>
                 </>
               ) : (
                 <>
                   <Copy className="w-3.5 h-3.5" />
-                  <span>Copy Link</span>
+                  <span>{t('created.copyLink')}</span>
                 </>
               )}
             </button>
@@ -280,7 +279,7 @@ export const CreatedPage: React.FC = () => {
               <Clock className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase">Expires In</div>
+              <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase">{t('status.expiresAt')}</div>
               <div className="text-xs font-bold text-slate-900 dark:text-white font-mono">
                 {formatCountdown(secondsRemaining)}
               </div>
@@ -293,9 +292,9 @@ export const CreatedPage: React.FC = () => {
               <KeyRound className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase">Access Passcode</div>
+              <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase">{t('created.accessPasscode')}</div>
               <div className="text-xs font-bold text-slate-900 dark:text-white font-mono">
-                {state.has_passcode ? 'Bcrypt Protected' : 'Open (None)'}
+                {state.has_passcode ? t('created.passcodeBcrypt') : t('created.passcodeOpen')}
               </div>
             </div>
           </div>
@@ -306,11 +305,11 @@ export const CreatedPage: React.FC = () => {
               <Flame className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase">Destruction Rule</div>
+              <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase">{t('created.destructionRule')}</div>
               <div className="text-xs font-bold text-slate-900 dark:text-white font-mono">
                 {state.max_views && state.max_views > 0
-                  ? state.max_views === 1 ? 'Burn on 1st Read' : `${state.max_views} Views`
-                  : 'On Timer Eviction'}
+                  ? state.max_views === 1 ? t('created.burnOn1stRead') : t('created.viewsAllowedPlural', { count: state.max_views })
+                  : t('created.onTimerEviction')}
               </div>
             </div>
           </div>
@@ -322,7 +321,7 @@ export const CreatedPage: React.FC = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
                 <FileCheck2 className="w-4 h-4 text-emerald-500" />
-                <span>Zero-Knowledge Delivery Receipt</span>
+                <span>{t('created.zkDeliveryReceipt')}</span>
               </div>
               <Link
                 to={`/status/${state.slug}#token=${state.status_token}`}
@@ -330,11 +329,11 @@ export const CreatedPage: React.FC = () => {
                 rel="noopener noreferrer"
                 className="text-xs font-mono text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 font-semibold"
               >
-                <span>Live Receipt &rarr;</span>
+                <span>{t('created.liveReceiptLink')}</span>
               </Link>
             </div>
             <p className="text-[11px] font-mono text-slate-500 dark:text-zinc-400 leading-relaxed">
-              Track whether your recipient opened or burned this secret without recording their IP address or personal data.
+              {t('created.zkReceiptDesc')}
             </p>
             <div className="flex items-center gap-2 pt-1">
               <div className="flex-1 px-3 py-1.5 rounded-lg border border-emerald-500/20 bg-white/60 dark:bg-black/50 text-[11px] font-mono text-slate-600 dark:text-emerald-300/90 truncate select-all">
@@ -355,12 +354,12 @@ export const CreatedPage: React.FC = () => {
                 {receiptCopied ? (
                   <>
                     <Check className="w-3 h-3" />
-                    <span>Copied</span>
+                    <span>{t('created.copied')}</span>
                   </>
                 ) : (
                   <>
                     <Copy className="w-3 h-3" />
-                    <span>Copy Receipt Link</span>
+                    <span>{t('created.copyReceiptLink')}</span>
                   </>
                 )}
               </button>
@@ -373,14 +372,14 @@ export const CreatedPage: React.FC = () => {
           <div className="flex items-center justify-between mb-3">
             <h2 className="flex items-center gap-1.5 text-xs font-mono uppercase font-bold text-slate-800 dark:text-slate-200">
               <QrCode className="w-3.5 h-3.5 text-emerald-500" />
-              <span>Mobile QR Code</span>
+              <span>{t('created.mobileQrCode')}</span>
             </h2>
             <button
               onClick={downloadQR}
               className="text-xs font-mono text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
             >
               <Download className="w-3 h-3" />
-              <span>Download PNG</span>
+              <span>{t('created.downloadPng')}</span>
             </button>
           </div>
           <div className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-black/40">
@@ -394,7 +393,7 @@ export const CreatedPage: React.FC = () => {
               />
             </div>
             <p className="mt-2.5 text-[11px] font-mono text-slate-500 dark:text-slate-400 text-center">
-              Scan with any mobile camera to open and decrypt instantly.
+              {t('created.scanMobileCamera')}
             </p>
           </div>
         </div>
@@ -402,7 +401,7 @@ export const CreatedPage: React.FC = () => {
         {/* Original Destination Preview */}
         {state.original_url && (
           <div className="border-t border-slate-200/70 dark:border-zinc-800 pt-3 text-[11px] font-mono text-slate-500 dark:text-slate-400">
-            <span className="font-semibold text-slate-700 dark:text-slate-300">Target: </span>
+            <span className="font-semibold text-slate-700 dark:text-slate-300">{t('created.targetLabel')}</span>
             <span className="break-all">{state.original_url}</span>
           </div>
         )}
@@ -416,7 +415,7 @@ export const CreatedPage: React.FC = () => {
             className="flex-1 py-2.5 px-3 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-slate-300 dark:hover:border-zinc-700 text-slate-800 dark:text-white text-xs font-mono font-semibold text-center flex items-center justify-center gap-1.5 transition-colors"
           >
             <ExternalLink className="w-3.5 h-3.5" />
-            <span>Open Link in New Tab</span>
+            <span>{t('created.openInNewTab')}</span>
           </a>
 
           <Link
@@ -424,7 +423,7 @@ export const CreatedPage: React.FC = () => {
             className="flex-1 py-2.5 px-3 rounded-lg border border-transparent bg-slate-100 dark:bg-zinc-800/80 hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-800 dark:text-white text-xs font-mono font-semibold text-center flex items-center justify-center gap-1.5 transition-colors"
           >
             <PlusCircle className="w-3.5 h-3.5" />
-            <span>Create Another Link</span>
+            <span>{t('created.createAnother')}</span>
           </Link>
         </div>
 
@@ -433,7 +432,7 @@ export const CreatedPage: React.FC = () => {
           <div className="flex items-center justify-between mb-2">
             <h2 className="flex items-center gap-1.5 text-xs font-mono uppercase font-bold text-slate-800 dark:text-slate-200">
               <Radio className="w-3.5 h-3.5 text-emerald-500" />
-              <span>Beam to Nearby Peer</span>
+              <span>{t('created.beamToNearby')}</span>
             </h2>
             <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-500 dark:text-slate-400">
               <span
@@ -448,11 +447,13 @@ export const CreatedPage: React.FC = () => {
               <span>
                 {wsStatus === 'connected'
                   ? peers.length > 0
-                    ? `${peers.length} peer${peers.length !== 1 ? 's' : ''} in range`
-                    : 'Searching peers...'
+                    ? peers.length === 1
+                      ? t('created.peersInRange', { count: peers.length })
+                      : t('created.peersInRangePlural', { count: peers.length })
+                    : t('created.searchingPeers')
                   : wsStatus === 'connecting'
-                  ? 'Connecting radar...'
-                  : 'Radar offline'}
+                  ? t('created.connectingRadar')
+                  : t('created.radarOffline')}
               </span>
               {wsStatus !== 'connected' && wsStatus !== 'connecting' && (
                 <button
@@ -460,21 +461,21 @@ export const CreatedPage: React.FC = () => {
                   onClick={reconnect}
                   className="text-emerald-500 hover:underline font-semibold ml-1"
                 >
-                  (Retry)
+                  {t('created.retryBtn')}
                 </button>
               )}
             </div>
           </div>
 
           <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400 mb-3">
-            Click any device below to beam this link directly over local WebRTC mesh.
+            {t('created.beamDirectlyHint')}
           </p>
 
           {/* Feedback banner */}
           {lastSentPeerName && (
             <div className="mb-2.5 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2 text-xs font-mono text-emerald-600 dark:text-emerald-400 animate-fade-in">
               <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-              <span>✓ Beamed to {lastSentPeerName}</span>
+              <span>{t('created.beamedToPeer', { name: lastSentPeerName })}</span>
             </div>
           )}
 
@@ -487,7 +488,7 @@ export const CreatedPage: React.FC = () => {
                   progress={null}
                   isSent={!!sentTo[peer.id]}
                   isSending={!!sendingTo[peer.id]}
-                  actionLabel="Beam Link"
+                  actionLabel={t('created.beamLinkBtn')}
                   onClick={() => handleSendToPeer(peer)}
                 />
               ))}
@@ -496,10 +497,10 @@ export const CreatedPage: React.FC = () => {
             <div className="p-3.5 rounded-lg border border-dashed border-slate-200 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-950/30 text-center">
               <p className="text-xs font-mono text-slate-500 dark:text-slate-400">
                 {wsStatus === 'connected'
-                  ? 'No nearby devices detected on your Wi-Fi network. Open GhostURL on another device to beam directly.'
+                  ? t('created.noNearbyDevices')
                   : wsStatus === 'connecting'
-                  ? 'Connecting to radar signaling hub...'
-                  : 'Radar is offline.'}
+                  ? t('created.connectingHub')
+                  : t('created.radarOffline')}
               </p>
             </div>
           )}

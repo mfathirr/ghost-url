@@ -48,6 +48,8 @@ function getFileTypeIcon(type: string, name: string) {
   return <File className="w-7 h-7 text-slate-400" />;
 }
 
+import { useTranslation } from '../hooks/useTranslation';
+
 interface GhostDropZoneProps {
   selectedFile: File | null;
   onFileSelected: (file: File | null) => void;
@@ -59,6 +61,7 @@ export const GhostDropZone: React.FC<GhostDropZoneProps> = ({
   onFileSelected,
   disabled = false,
 }) => {
+  const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -140,17 +143,17 @@ export const GhostDropZone: React.FC<GhostDropZoneProps> = ({
           </div>
 
           <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mb-1 font-mono">
-            Select or drop file to beam
+            {t('dropZone.selectOrDrop')}
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-            Drag files directly here, or{' '}
+            {t('dropZone.dragPrompt')}
             <span className="text-emerald-600 dark:text-emerald-400 font-semibold underline underline-offset-2">
-              browse local disk
+              {t('dropZone.browseLocalDisk')}
             </span>
           </p>
 
           <div className="mt-3.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-900 text-[10px] text-slate-500 dark:text-slate-400 font-mono">
-            <span>Direct WebRTC stream: Zero cloud persistence</span>
+            <span>{t('dropZone.directStream')}</span>
           </div>
         </div>
       ) : (
@@ -169,7 +172,7 @@ export const GhostDropZone: React.FC<GhostDropZoneProps> = ({
                     {formatBytes(selectedFile.size)}
                   </span>
                   <span>•</span>
-                  <span className="truncate">{selectedFile.type || 'Binary file'}</span>
+                  <span className="truncate">{selectedFile.type || t('dropZone.binaryFile')}</span>
                 </div>
               </div>
             </div>
@@ -179,7 +182,7 @@ export const GhostDropZone: React.FC<GhostDropZoneProps> = ({
               onClick={handleClear}
               disabled={disabled}
               className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-white dark:hover:bg-zinc-800 transition-colors shrink-0"
-              title="Remove file"
+              title={t('dropZone.removeFile')}
             >
               <X className="w-4 h-4" />
             </button>
@@ -190,7 +193,7 @@ export const GhostDropZone: React.FC<GhostDropZoneProps> = ({
             <div className="mt-2.5 pt-2.5 border-t border-emerald-500/20 flex items-start gap-2 text-[11px] text-amber-700 dark:text-amber-300 font-mono">
               <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-500" />
               <span>
-                High-capacity file ({formatBytes(selectedFile.size)}). Stream throughput relies on local network bandwidth.
+                {t('dropZone.highCapacity', { size: formatBytes(selectedFile.size) })}
               </span>
             </div>
           )}

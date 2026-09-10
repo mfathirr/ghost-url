@@ -305,8 +305,28 @@ func (h *LinkHandler) RedirectLink(c *gin.Context) {
 	// respond with static HTML containing generic OpenGraph tags without mutating views or redirecting to SPA.
 	userAgent := c.GetHeader("User-Agent")
 	if botUserAgentRegex.MatchString(userAgent) {
+		acceptLang := strings.ToLower(c.GetHeader("Accept-Language"))
+		isIndonesian := strings.Contains(acceptLang, "id")
+
 		c.Header("Content-Type", "text/html; charset=utf-8")
-		c.String(http.StatusOK, `<!DOCTYPE html>
+		if isIndonesian {
+			c.String(http.StatusOK, `<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>GhostURL | Tautan Rahasia Terenkripsi</title>
+  <meta property="og:title" content="GhostURL | Tautan Rahasia Terenkripsi" />
+  <meta property="og:description" content="Tautan ini berisi pesan yang menghancurkan diri sendiri. Buka di peramban untuk melihat." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="GhostURL" />
+  <meta name="robots" content="noindex, nofollow" />
+</head>
+<body>
+  <p>Tautan rahasia efemeris. Buka di peramban web untuk melihat.</p>
+</body>
+</html>`)
+		} else {
+			c.String(http.StatusOK, `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -321,6 +341,7 @@ func (h *LinkHandler) RedirectLink(c *gin.Context) {
   <p>Ephemeral secret link. Open in a web browser to view.</p>
 </body>
 </html>`)
+		}
 		return
 	}
 

@@ -45,6 +45,8 @@ export interface StatusReceipt {
 
 export interface ApiError {
   error: string;
+  code?: string;
 }
 
 export * from './sound';
+export * from './i18n';

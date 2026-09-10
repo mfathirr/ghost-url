@@ -1,20 +1,18 @@
 import React from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import { useSound } from '../context/SoundContext';
+import { useTranslation } from '../hooks/useTranslation';
 
 export const SoundToggle: React.FC = () => {
   const { soundEnabled, toggleSound } = useSound();
+  const { t } = useTranslation();
 
   return (
     <button
       type="button"
       onClick={toggleSound}
-      aria-label={soundEnabled ? 'Mute audio and haptic feedback' : 'Enable sound and haptic immersion'}
-      title={
-        soundEnabled
-          ? 'Stealth Audio: Active (Click to mute)'
-          : 'Stealth Audio: Muted (Click to enable sci-fi immersion)'
-      }
+      aria-label={soundEnabled ? t('nav.soundAriaActive') : t('nav.soundAriaMuted')}
+      title={soundEnabled ? t('nav.soundTitleActive') : t('nav.soundTitleMuted')}
       className={`relative p-2 rounded-lg border transition-all shadow-sm ${
         soundEnabled
           ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 dark:border-emerald-500/30'
@@ -35,3 +33,4 @@ export const SoundToggle: React.FC = () => {
     </button>
   );
 };
+

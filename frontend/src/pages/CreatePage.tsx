@@ -34,6 +34,7 @@ import type { PeerInfo } from '../types/p2p';
 import { copyToClipboard } from '../utils/clipboard';
 import { SEO } from '../components/SEO';
 import { generateKey, exportKeyToBase64, encrypt } from '../utils/crypto';
+import { useTranslation } from '../hooks/useTranslation';
 
 const HOME_JSON_LD = {
   '@context': 'https://schema.org',
@@ -129,6 +130,7 @@ const HOME_JSON_LD = {
 
 export const CreatePage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // Mode switcher: GhostLink, GhostPaste, or GhostDrop
   const [mode, setMode] = useState<'link' | 'paste' | 'drop'>(() => {
@@ -269,11 +271,11 @@ export const CreatePage: React.FC = () => {
 
     const trimmedUrl = url.trim();
     if (mode === 'link' && !trimmedUrl) {
-      setErrorMessage('Please enter a destination URL');
+      setErrorMessage(t('errors.invalidUrl'));
       return;
     }
     if (mode === 'paste' && !noteContent.trim()) {
-      setErrorMessage('Please enter your secret note content');
+      setErrorMessage(t('errors.emptyNote'));
       return;
     }
 
@@ -325,7 +327,7 @@ export const CreatePage: React.FC = () => {
       if (err instanceof Error) {
         setErrorMessage(err.message);
       } else {
-        setErrorMessage('Failed to create ephemeral link');
+        setErrorMessage(t('errors.genericError'));
       }
     } finally {
       setIsSubmitting(false);
@@ -373,25 +375,27 @@ export const CreatePage: React.FC = () => {
             <span className="font-semibold text-emerald-600 dark:text-emerald-400">P2P RADAR:</span>
             <span>
               {wsStatus === 'connected'
-                ? `${peers.length} PEER${peers.length !== 1 ? 'S' : ''} ONLINE`
+                ? peers.length === 1
+                  ? t('dropZone.peersOnline', { count: peers.length })
+                  : t('dropZone.peersOnlinePlural', { count: peers.length })
                 : wsStatus === 'connecting'
-                ? 'INITIALIZING...'
-                : 'STANDBY'}
+                ? t('created.connectingRadar')
+                : t('created.radarOffline')}
             </span>
           </div>
 
           <h1 id="hero-heading" className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.08] mb-4">
-            Zero-knowledge ephemeral bridge.
+            <span className="text-emerald-500">{t('hero.title1')}</span> {t('hero.title2')}
           </h1>
 
           <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed mb-6 max-w-md">
-            Burn-on-read short links, browser-encrypted secret notes, and direct device-to-device transfers. Zero persistent disk storage.
+            {t('hero.subtitle')}
           </p>
 
           {/* Mode Selector (Tactile Hardware Tabs) */}
           <div className="space-y-1.5">
             <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 dark:text-slate-500">
-              Select Protocol Mode:
+              {t('hero.protocolMode')}
             </span>
             <div
               role="tablist"
@@ -399,9 +403,9 @@ export const CreatePage: React.FC = () => {
               className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800"
             >
               {[
-                { id: 'link', label: 'Ghost Link', icon: LinkIcon, badge: 'Short Link' },
-                { id: 'paste', label: 'Ghost Paste', icon: FileText, badge: 'Secret Note' },
-                { id: 'drop', label: 'Ghost Drop', icon: Radio, badge: 'Beam File' },
+                { id: 'link', label: t('hero.modeLink'), icon: LinkIcon, badge: t('hero.modeLinkDesc') },
+                { id: 'paste', label: t('hero.modePaste'), icon: FileText, badge: t('hero.modePasteDesc') },
+                { id: 'drop', label: t('hero.modeDrop'), icon: Radio, badge: t('hero.modeDropDesc') },
               ].map((tab) => {
                 const isActive = mode === tab.id;
                 const Icon = tab.icon;
@@ -445,16 +449,16 @@ export const CreatePage: React.FC = () => {
           {/* Quick Security Metrics */}
           <div className="mt-8 pt-6 border-t border-slate-200/80 dark:border-white/5 grid grid-cols-3 gap-3 font-mono text-[11px]">
             <div>
-              <span className="block text-slate-400 dark:text-slate-500 text-[10px]">STORAGE</span>
-              <span className="text-slate-800 dark:text-slate-200 font-semibold">RAM TTL ONLY</span>
+              <span className="block text-slate-400 dark:text-slate-500 text-[10px]">{t('hero.metricsStorageLabel')}</span>
+              <span className="text-slate-800 dark:text-slate-200 font-semibold">{t('hero.metricsStorageVal')}</span>
             </div>
             <div>
-              <span className="block text-slate-400 dark:text-slate-500 text-[10px]">CIPHER</span>
-              <span className="text-slate-800 dark:text-slate-200 font-semibold">AES-256-GCM</span>
+              <span className="block text-slate-400 dark:text-slate-500 text-[10px]">{t('hero.metricsCipherLabel')}</span>
+              <span className="text-slate-800 dark:text-slate-200 font-semibold">{t('hero.metricsCipherVal')}</span>
             </div>
             <div>
-              <span className="block text-slate-400 dark:text-slate-500 text-[10px]">ACCOUNTS</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">ZERO REQUIRED</span>
+              <span className="block text-slate-400 dark:text-slate-500 text-[10px]">{t('hero.metricsAccountsLabel')}</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{t('hero.metricsAccountsVal')}</span>
             </div>
           </div>
         </div>
@@ -477,7 +481,7 @@ export const CreatePage: React.FC = () => {
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <label htmlFor="url-input" className="block text-xs font-mono uppercase tracking-wider text-slate-700 dark:text-slate-300 font-semibold">
-                          Target Destination URL <span className="text-emerald-500">*</span>
+                          {t('linkForm.urlLabel')} <span className="text-emerald-500">*</span>
                         </label>
                         <button
                           type="button"
@@ -487,10 +491,10 @@ export const CreatePage: React.FC = () => {
                               ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 font-semibold'
                               : 'border-slate-200 dark:border-zinc-800 text-slate-500 dark:text-slate-400 hover:border-slate-300'
                           }`}
-                          title="Encrypt destination URL directly inside your browser so backend servers never see the link"
+                          title={t('linkForm.e2eeDesc')}
                         >
                           <Lock className="w-3 h-3" />
-                          <span>E2EE: {isE2EE ? 'ENABLED' : 'OFF'}</span>
+                          <span>{isE2EE ? t('linkForm.e2eeEnabled') : t('linkForm.e2eeOff')}</span>
                         </button>
                       </div>
                       <div className="relative">
@@ -503,7 +507,7 @@ export const CreatePage: React.FC = () => {
                           required
                           value={url}
                           onChange={(e) => setUrl(e.target.value)}
-                          placeholder="https://example.com/confidential-document"
+                          placeholder={t('linkForm.urlPlaceholder')}
                           className="w-full pl-9 pr-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-black/50 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 text-sm font-mono transition-all"
                         />
                       </div>
@@ -512,7 +516,7 @@ export const CreatePage: React.FC = () => {
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <label htmlFor="note-input" className="block text-xs font-mono uppercase tracking-wider text-slate-700 dark:text-slate-300 font-semibold">
-                          Confidential Note or Snippet <span className="text-emerald-500">*</span>
+                          {t('pasteForm.noteLabel')} <span className="text-emerald-500">*</span>
                         </label>
                         <div className="flex items-center gap-1.5">
                           <Code2 className="w-3.5 h-3.5 text-slate-400" />
@@ -521,7 +525,7 @@ export const CreatePage: React.FC = () => {
                             onChange={(e) => setNoteLanguage(e.target.value)}
                             className="text-xs py-1 px-2 rounded border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-800 dark:text-slate-200 font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
                           >
-                            <option value="auto">Auto Detect</option>
+                            <option value="auto">{t('pasteForm.syntaxAuto')}</option>
                             <option value="plaintext">Plain Text</option>
                             <option value="javascript">JavaScript</option>
                             <option value="typescript">TypeScript</option>
@@ -543,7 +547,7 @@ export const CreatePage: React.FC = () => {
                           rows={6}
                           value={noteContent}
                           onChange={(e) => setNoteContent(e.target.value)}
-                          placeholder="Paste passwords, private keys, API secrets, or confidential notes..."
+                          placeholder={t('pasteForm.notePlaceholder')}
                           className="w-full p-3.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-black/50 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 text-xs sm:text-sm font-mono resize-y transition-all"
                         />
                       </div>
@@ -551,10 +555,10 @@ export const CreatePage: React.FC = () => {
                       <div className="mt-1.5 flex items-center justify-between text-[11px] font-mono text-slate-500 dark:text-slate-400">
                         <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
                           <Lock className="w-3 h-3" />
-                          <span>Client Encrypted: Key stays in URL fragment</span>
+                          <span>{t('pasteForm.e2eeNotice')}</span>
                         </div>
                         <span>
-                          {noteContent.length} chars • {noteContent.split('\n').length} lines
+                          {t('secretNote.linesChars', { lines: noteContent.split('\n').length, chars: noteContent.length })}
                         </span>
                       </div>
                     </div>
@@ -563,15 +567,15 @@ export const CreatePage: React.FC = () => {
                   {/* Expiration Presets */}
                   <div>
                     <label className="block text-xs font-mono uppercase tracking-wider text-slate-700 dark:text-slate-300 font-semibold mb-1.5">
-                      Auto-Eviction Lifetime
+                      {t('linkForm.expiryLabel')}
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
                       {[
-                        { id: '5m', label: '5 Mins' },
-                        { id: '30m', label: '30 Mins' },
-                        { id: '1h', label: '1 Hour' },
-                        { id: '24h', label: '24 Hours' },
-                        { id: 'custom', label: 'Custom' },
+                        { id: '5m', label: t('linkForm.exp5m') },
+                        { id: '30m', label: t('linkForm.exp30m') },
+                        { id: '1h', label: t('linkForm.exp1h') },
+                        { id: '24h', label: t('linkForm.exp24h') },
+                        { id: 'custom', label: t('linkForm.expCustom') },
                       ].map((opt) => (
                         <button
                           type="button"
@@ -592,7 +596,7 @@ export const CreatePage: React.FC = () => {
                     {/* Custom TTL row */}
                     {expiryOption === 'custom' && (
                       <div className="mt-2.5 p-3 rounded-lg bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-zinc-800 flex flex-wrap items-center gap-2 text-xs font-mono">
-                        <span className="text-slate-500 dark:text-slate-400">Lifetime:</span>
+                        <span className="text-slate-500 dark:text-slate-400">{t('linkForm.customLifetime')}</span>
                         <input
                           type="number"
                           min={1}
@@ -606,9 +610,9 @@ export const CreatePage: React.FC = () => {
                           onChange={(e) => setCustomUnit(e.target.value as 'm' | 'h' | 'd')}
                           className="px-2.5 py-1 rounded border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         >
-                          <option value="m">Minutes</option>
-                          <option value="h">Hours</option>
-                          <option value="d">Days (max 7)</option>
+                          <option value="m">{t('linkForm.customMinutes')}</option>
+                          <option value="h">{t('linkForm.customHours')}</option>
+                          <option value="d">{t('linkForm.customDays')}</option>
                         </select>
                       </div>
                     )}
@@ -623,7 +627,7 @@ export const CreatePage: React.FC = () => {
                     >
                       <span className="flex items-center gap-1.5 font-semibold">
                         <Flame className="w-3.5 h-3.5 text-amber-500" />
-                        <span>Burn-on-Read &amp; Passcode Protections</span>
+                        <span>{t('linkForm.advancedOptions')}</span>
                       </span>
                       <motion.div
                         animate={{ rotate: showAdvanced ? 180 : 0 }}
@@ -647,20 +651,20 @@ export const CreatePage: React.FC = () => {
                             {/* Burn on Read option */}
                             <div>
                               <label className="block text-xs font-mono uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
-                                Burn Limit
+                                {t('linkForm.viewLimitLabel')}
                               </label>
-                              <div className="grid grid-cols-4 gap-1.5 font-mono text-xs">
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 font-mono text-xs">
                                 {[
-                                  { val: 0, label: 'Standard TTL' },
-                                  { val: 1, label: '1 View (Burn)' },
-                                  { val: 3, label: '3 Views' },
-                                  { val: 5, label: '5 Views' },
+                                  { val: 0, label: t('linkForm.viewLimitUnlimited') },
+                                  { val: 1, label: t('linkForm.viewLimit1') },
+                                  { val: 3, label: t('linkForm.viewLimit3') },
+                                  { val: 5, label: t('linkForm.viewLimit5') },
                                 ].map((item) => (
                                   <button
                                     key={item.val}
                                     type="button"
                                     onClick={() => setViewLimit(item.val)}
-                                    className={`py-1.5 px-2 rounded border text-center transition-colors ${
+                                    className={`py-1.5 px-2 rounded border text-center transition-colors truncate ${
                                       viewLimit === item.val
                                         ? 'bg-emerald-500/15 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold'
                                         : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 text-slate-600 dark:text-slate-400'
@@ -675,7 +679,7 @@ export const CreatePage: React.FC = () => {
                             {/* Passcode Protection */}
                             <div>
                               <label htmlFor="passcode-input" className="block text-xs font-mono uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
-                                Optional Access Passcode (Bcrypt Hashed)
+                                {t('linkForm.passcodeLabel')}
                               </label>
                               <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -686,7 +690,7 @@ export const CreatePage: React.FC = () => {
                                   type={showPasscode ? 'text' : 'password'}
                                   value={passcode}
                                   onChange={(e) => setPasscode(e.target.value)}
-                                  placeholder="Leave blank for open access"
+                                  placeholder={t('linkForm.passcodePlaceholder')}
                                   className="w-full pl-9 pr-10 py-2 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-black/50 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 text-xs font-mono"
                                 />
                                 <button
@@ -703,9 +707,9 @@ export const CreatePage: React.FC = () => {
                             <div>
                               <div className="flex items-center justify-between mb-1.5">
                                 <label htmlFor="duress-input" className="block text-xs font-mono uppercase tracking-wider text-rose-700 dark:text-rose-400 font-semibold">
-                                  Duress Passcode ("Poison Pill")
+                                  {t('linkForm.duressLabel')}
                                 </label>
-                                <span className="text-[10px] font-mono text-slate-500 dark:text-zinc-400">Anti-coercion</span>
+                                <span className="text-[10px] font-mono text-slate-500 dark:text-zinc-400">{t('linkForm.duressBadge')}</span>
                               </div>
                               <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-rose-500">
@@ -716,7 +720,7 @@ export const CreatePage: React.FC = () => {
                                   type={showDuress ? 'text' : 'password'}
                                   value={duressPasscode}
                                   onChange={(e) => setDuressPasscode(e.target.value)}
-                                  placeholder="Secondary code to purge data if coerced"
+                                  placeholder={t('linkForm.duressPlaceholder')}
                                   className="w-full pl-9 pr-10 py-2 rounded-lg border border-rose-300 dark:border-rose-900/50 bg-rose-50/70 dark:bg-rose-950/20 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-rose-500 text-xs font-mono"
                                 />
                                 <button
@@ -728,14 +732,14 @@ export const CreatePage: React.FC = () => {
                                 </button>
                               </div>
                               <p className="mt-1 text-[10px] text-slate-500 dark:text-zinc-400 font-mono">
-                                If entered at unlock, this code immediately purges the link and displays a 404 page for plausible deniability.
+                                {t('linkForm.duressDesc')}
                               </p>
                             </div>
 
                             {/* Custom Alias */}
                             <div>
                               <label htmlFor="alias-input" className="block text-xs font-mono uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
-                                Custom Slug Alias (Optional)
+                                {t('linkForm.aliasLabel')}
                               </label>
                               <div className="flex items-center rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-black/50 px-3 py-1.5 text-xs font-mono">
                                 <span className="text-slate-400 select-none">ghosturl.web.id/r/</span>
@@ -744,7 +748,7 @@ export const CreatePage: React.FC = () => {
                                   type="text"
                                   value={alias}
                                   onChange={(e) => setAlias(e.target.value.toLowerCase().replace(/[^a-z0-9-_]/g, ''))}
-                                  placeholder="my-secret"
+                                  placeholder={t('linkForm.aliasPlaceholder')}
                                   maxLength={32}
                                   className="w-full bg-transparent text-slate-900 dark:text-white focus:outline-none ml-1 font-mono"
                                 />
@@ -763,10 +767,10 @@ export const CreatePage: React.FC = () => {
                     className="w-full py-3 px-4 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-mono font-bold text-sm tracking-wider uppercase transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:-translate-y-[1px] active:scale-[0.99] shadow-sm"
                   >
                     {isSubmitting ? (
-                      <span>TRANSMITTING...</span>
+                      <span>{t('linkForm.submittingBtn')}</span>
                     ) : (
                       <>
-                        <span>{mode === 'paste' ? 'CREATE ENCRYPTED NOTE' : 'CREATE EPHEMERAL LINK'}</span>
+                        <span>{t('linkForm.submitBtn')}</span>
                         <ArrowUpRight className="w-4 h-4" />
                       </>
                     )}
@@ -781,7 +785,7 @@ export const CreatePage: React.FC = () => {
                         className="inline-flex items-center gap-1.5 text-xs font-mono text-zinc-500 hover:text-emerald-500 dark:text-zinc-400 dark:hover:text-emerald-400 transition-colors"
                       >
                         <FileCheck2 className="w-3.5 h-3.5 text-emerald-500" />
-                        <span>Recent Delivery Receipts ({storedReceipts.length})</span>
+                        <span>{t('hero.receiptsBtn')} ({storedReceipts.length})</span>
                       </button>
                     </div>
                   )}
@@ -806,10 +810,12 @@ export const CreatePage: React.FC = () => {
                     />
                     <span>
                       {wsStatus === 'connected'
-                        ? `${peers.length} peer${peers.length !== 1 ? 's' : ''} in radar range`
+                        ? peers.length > 0
+                          ? t('created.peersInRangePlural', { count: peers.length })
+                          : t('dropZone.noPeers')
                         : wsStatus === 'connecting'
-                        ? 'Connecting to radar mesh...'
-                        : 'Radar offline'}
+                        ? t('dropZone.searchingNearby')
+                        : t('dropZone.radarOffline')}
                     </span>
                     {wsStatus !== 'connected' && wsStatus !== 'connecting' && (
                       <button
@@ -817,7 +823,7 @@ export const CreatePage: React.FC = () => {
                         onClick={reconnect}
                         className="text-emerald-500 hover:underline font-semibold ml-1"
                       >
-                        (Retry)
+                        {t('created.retryBtn')}
                       </button>
                     )}
                   </div>
@@ -831,17 +837,17 @@ export const CreatePage: React.FC = () => {
                           ? 'border-emerald-500 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                           : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-slate-200 hover:border-emerald-500/40'
                       }`}
-                      title="Share remote room invite link with peers outside local network"
+                      title={t('dropZone.shareInvite')}
                     >
                       {dropLinkCopied ? (
                         <>
                           <Check className="w-3.5 h-3.5 text-emerald-500" />
-                          <span>Link Copied</span>
+                          <span>{t('dropZone.copied')}</span>
                         </>
                       ) : (
                         <>
                           <Share2 className="w-3.5 h-3.5 text-emerald-500" />
-                          <span>{roomCode ? `Room #${roomCode}` : 'Share Room Invite'}</span>
+                          <span>{roomCode ? t('dropZone.roomLabel', { code: roomCode }) : t('dropZone.shareInvite')}</span>
                         </>
                       )}
                     </button>
@@ -853,7 +859,7 @@ export const CreatePage: React.FC = () => {
                         className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors"
                       >
                         <LogOut className="w-3 h-3" />
-                        <span>Leave</span>
+                        <span>{t('dropZone.leaveRoom')}</span>
                       </button>
                     )}
                   </div>
@@ -878,7 +884,7 @@ export const CreatePage: React.FC = () => {
                           isSent={!!sentToPeerId[peer.id]}
                           isSending={!!sendingToPeerId[peer.id]}
                           disabled={!selectedFile}
-                          actionLabel={selectedFile ? 'Beam File' : 'Pick File'}
+                          actionLabel={selectedFile ? t('dropZone.beamFile') : t('dropZone.pickFile')}
                           onClick={() => handleSendFileToPeer(peer)}
                         />
                       );
@@ -890,10 +896,10 @@ export const CreatePage: React.FC = () => {
                       <Radio className="w-5 h-5 text-emerald-500" />
                     </div>
                     <h3 className="text-xs font-mono uppercase font-bold text-slate-800 dark:text-slate-200 mb-1">
-                      Searching for nearby peers...
+                      {t('dropZone.searchingNearby')}
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-3">
-                      Open GhostURL on another computer or phone on the same Wi-Fi network to beam files without cloud storage.
+                      {t('dropZone.openOnAnother')}
                     </p>
                     <button
                       type="button"
@@ -901,7 +907,7 @@ export const CreatePage: React.FC = () => {
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 transition-colors"
                     >
                       <Share2 className="w-3.5 h-3.5" />
-                      <span>Copy Remote Room Code</span>
+                      <span>{t('dropZone.copyRemoteCode')}</span>
                     </button>
                   </div>
                 )}
@@ -915,13 +921,13 @@ export const CreatePage: React.FC = () => {
       <section aria-labelledby="architecture-guarantees-heading" className="mb-20">
         <div className="mb-8">
           <span className="font-mono text-xs uppercase tracking-widest text-emerald-500 font-semibold block mb-1.5">
-            Cryptographic Architecture
+            {t('bento.sectionTag')}
           </span>
           <h2 id="architecture-guarantees-heading" className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            Engineered for zero data retention.
+            {t('bento.sectionTitle')}
           </h2>
           <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl">
-            Every layer in the system is intentionally architected to eliminate persistence attack vectors.
+            {t('bento.sectionDesc')}
           </p>
         </div>
 
@@ -938,26 +944,26 @@ export const CreatePage: React.FC = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
               <div className="absolute bottom-3 left-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-black/75 border border-emerald-500/30 text-[10px] font-mono text-emerald-400 backdrop-blur-md">
                 <Cpu className="w-3.5 h-3.5 text-emerald-400" />
-                <span>REDIS MEMORY AUTO-EVICTION</span>
+                <span>{t('bento.card1Tag')}</span>
               </div>
             </div>
             <div className="p-6 shrink-0 flex flex-col justify-between border-t border-slate-200/80 dark:border-white/5 bg-slate-50/40 dark:bg-black/20">
               <div>
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                    Hardware RAM Eviction
+                    {t('bento.card1Title')}
                   </h3>
                   <span className="font-mono text-[10px] uppercase text-emerald-600 dark:text-emerald-400 font-semibold px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
-                    Zero Disk Journaling
+                    {t('bento.card1Badge')}
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Ephemeral links live strictly within high-performance in-memory Redis buffers. Once your configured lifetime expires or a Burn-on-Read GETDEL signal triggers, the memory chunk is instantly cleared with zero disk journaling.
+                  {t('bento.card1Desc')}
                 </p>
               </div>
               <div className="mt-4 pt-3 border-t border-slate-200/80 dark:border-white/5 font-mono text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center justify-between">
-                <span>POSIX In-Memory Auto-Purge</span>
-                <span className="text-slate-500 dark:text-slate-500">Atomic O(1) Eviction</span>
+                <span>{t('bento.card1Meta1')}</span>
+                <span className="text-slate-500 dark:text-slate-500">{t('bento.card1Meta2')}</span>
               </div>
             </div>
           </div>
@@ -971,14 +977,14 @@ export const CreatePage: React.FC = () => {
                   <Lock className="w-4 h-4" />
                 </div>
                 <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
-                  Zero-Server Key Exposure
+                  {t('bento.card2Title')}
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Secret notes and encrypted links are sealed with AES-GCM-256 directly in your browser. The decryption key resides exclusively inside the URL hash fragment (#k=), which web browsers never transmit to web servers.
+                  {t('bento.card2Desc')}
                 </p>
               </div>
               <div className="mt-4 pt-3 border-t border-slate-200/80 dark:border-white/5 font-mono text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-                RFC-7518 WebCrypto Standards
+                {t('bento.card2Meta')}
               </div>
             </div>
 
@@ -989,14 +995,14 @@ export const CreatePage: React.FC = () => {
                   <Zap className="w-4 h-4" />
                 </div>
                 <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
-                  Browser-to-Browser Mesh
+                  {t('bento.card3Title')}
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  GhostDrop streams files directly between peer browser memories using raw binary WebRTC DataChannels. Files never touch cloud drives or servers, maximizing local network throughput with zero storage footprints.
+                  {t('bento.card3Desc')}
                 </p>
               </div>
               <div className="mt-4 pt-3 border-t border-slate-200/80 dark:border-white/5 font-mono text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-                P2P RTCDataChannel Flow Control
+                {t('bento.card3Meta')}
               </div>
             </div>
           </div>
@@ -1007,65 +1013,65 @@ export const CreatePage: React.FC = () => {
       <section aria-labelledby="faq-section-heading" className="pt-12 border-t border-slate-200/80 dark:border-white/10">
         <div className="mb-8">
           <h2 id="faq-section-heading" className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-            Frequently Asked Questions
+            {t('faq.sectionTitle')}
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Technical guarantees, encryption workflows, and zero-retention policies.
+            {t('faq.sectionSubtitle')}
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 divide-y md:divide-y-0 divide-slate-200/80 dark:divide-white/5">
           <div className="pt-4 md:pt-0">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1.5">
-              What does "Burn on Read" mean?
+              {t('faq.q1')}
             </h3>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              A Burn-on-Read link is a single-use link. As soon as the recipient opens and unlocks it, the link is permanently destroyed via an atomic memory purge. If anyone refreshes or revisits the link, the server confirms that it has vanished forever.
+              {t('faq.a1')}
             </p>
           </div>
 
           <div className="pt-4 md:pt-0">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1.5">
-              Can GhostURL or anyone else read my secret notes?
+              {t('faq.q2')}
             </h3>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              No. When you share a secret note, it is encrypted directly inside your browser before leaving your device. The secret decryption key is stored inside the link fragment and is never sent across the internet to our servers.
+              {t('faq.a2')}
             </p>
           </div>
 
           <div className="pt-4 md:pt-0">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1.5">
-              Do I or my recipient need an account?
+              {t('faq.q3')}
             </h3>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Never. GhostURL is 100% account-free and anonymous. We do not ask for emails, phone numbers, or passwords. Paste your link or note, set your destruction rules, and share.
+              {t('faq.a3')}
             </p>
           </div>
 
           <div className="pt-4 md:pt-0">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1.5">
-              How does the Anti-Crawler Bot Shield work?
+              {t('faq.q4')}
             </h3>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              When links are shared on Slack, Discord, or WhatsApp, automated crawlers fetch links to render preview cards. For single-use links, GhostURL returns a static preview without counting as a view, and requires a human Slide-to-Reveal confirmation before incinerating the secret.
+              {t('faq.a4')}
             </p>
           </div>
 
           <div className="pt-4 md:pt-0">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1.5">
-              What is a Duress Passcode ("Poison Pill")?
+              {t('faq.q5')}
             </h3>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              If forced to unlock a link under coercion, you can enter your pre-configured duress passcode instead of your primary password. GhostURL purges the link immediately and displays a 404 expired screen for plausible deniability.
+              {t('faq.a5')}
             </p>
           </div>
 
           <div className="pt-4 md:pt-0">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1.5">
-              How does GhostDrop beam files without cloud storage?
+              {t('faq.q6')}
             </h3>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              GhostDrop connects devices directly over your local network using WebRTC DataChannels. Files stream from one device's browser memory directly into another device's browser memory, completely bypassing cloud drives, servers, and databases.
+              {t('faq.a6')}
             </p>
           </div>
         </div>
@@ -1085,7 +1091,7 @@ export const CreatePage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <FileCheck2 className="w-5 h-5 text-emerald-500" />
                   <h3 className="font-bold text-sm text-slate-900 dark:text-white font-mono uppercase tracking-wider">
-                    Recent Delivery Receipts
+                    {t('receiptsModal.title')}
                   </h3>
                 </div>
                 <button
@@ -1100,7 +1106,7 @@ export const CreatePage: React.FC = () => {
               <div className="max-h-80 overflow-y-auto space-y-2.5 pr-1">
                 {storedReceipts.length === 0 ? (
                   <p className="text-center py-6 text-xs text-slate-500 dark:text-zinc-500 font-mono">
-                    No receipts recorded yet. Receipts are generated when you create links or notes.
+                    {t('receiptsModal.empty')}
                   </p>
                 ) : (
                   storedReceipts.map((rec) => (
@@ -1123,7 +1129,7 @@ export const CreatePage: React.FC = () => {
                           rel="noopener noreferrer"
                           className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider text-[10px] transition-colors"
                         >
-                          Check Status &rarr;
+                          {t('receiptsModal.viewReceipt')} &rarr;
                         </Link>
                       </div>
                     </div>
@@ -1133,7 +1139,7 @@ export const CreatePage: React.FC = () => {
 
               {storedReceipts.length > 0 && (
                 <div className="pt-3 border-t border-slate-200 dark:border-zinc-800 flex justify-between items-center text-[11px] font-mono text-zinc-400">
-                  <span>Saved locally in your browser</span>
+                  <span>{t('receiptsModal.savedLocally')}</span>
                   <button
                     type="button"
                     onClick={() => {
@@ -1143,7 +1149,7 @@ export const CreatePage: React.FC = () => {
                     className="text-rose-500 hover:underline flex items-center gap-1 cursor-pointer"
                   >
                     <Trash2 className="w-3 h-3" />
-                    <span>Clear History</span>
+                    <span>{t('receiptsModal.clearAll')}</span>
                   </button>
                 </div>
               )}

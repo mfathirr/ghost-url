@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, useMotionValue, useTransform, useReducedMotion } from 'motion/react';
 import { Check, ArrowRight, Flame } from 'lucide-react';
 import { soundFx } from '../utils/soundEngine';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface SlideToRevealProps {
   onConfirm: () => void;
@@ -14,6 +15,7 @@ export const SlideToReveal: React.FC<SlideToRevealProps> = ({
   disabled = false,
   isUnlocking = false,
 }) => {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const [maxDrag, setMaxDrag] = useState(240);
   const [confirmed, setConfirmed] = useState(false);
@@ -86,7 +88,7 @@ export const SlideToReveal: React.FC<SlideToRevealProps> = ({
       <div
         ref={containerRef}
         role="slider"
-        aria-label="Slide to unlock and destroy secret"
+        aria-label={t('unlock.slideToReveal')}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={confirmed ? 100 : 0}
@@ -111,16 +113,16 @@ export const SlideToReveal: React.FC<SlideToRevealProps> = ({
         {/* Centered Guide Text */}
         <motion.div
           style={{ opacity: shouldReduceMotion ? 1 : textOpacity }}
-          className="absolute inset-0 flex items-center justify-center pointer-events-none text-xs font-mono font-bold tracking-wider uppercase pl-10 text-slate-500 dark:text-zinc-400"
+          className="absolute inset-0 flex items-center justify-center pointer-events-none text-xs font-mono font-bold tracking-wider uppercase pl-10 pr-4 text-slate-500 dark:text-zinc-400 overflow-hidden"
         >
           {isUnlocking ? (
-            <span className="text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
-              <Flame className="w-4 h-4" />
-              Incinerating &amp; Decrypting...
+            <span className="text-rose-600 dark:text-rose-400 flex items-center gap-1.5 truncate">
+              <Flame className="w-4 h-4 flex-shrink-0" />
+              {t('unlock.unlocking')}
             </span>
           ) : (
-            <span className="text-slate-600 dark:text-zinc-300">
-              Slide to Reveal &amp; Burn
+            <span className="text-slate-600 dark:text-zinc-300 truncate">
+              {t('unlock.slideToReveal')}
             </span>
           )}
         </motion.div>
@@ -151,14 +153,14 @@ export const SlideToReveal: React.FC<SlideToRevealProps> = ({
 
       {/* Understated Fallback & Notice */}
       <div className="flex items-center justify-between px-1 text-[11px] font-mono text-slate-500 dark:text-zinc-400">
-        <span>Single-Use Burn Vault</span>
+        <span>{t('created.burnOn1stRead')}</span>
         <button
           type="button"
           disabled={disabled || confirmed || isUnlocking}
           onClick={triggerConfirm}
           className="hover:text-emerald-600 dark:hover:text-emerald-400 underline underline-offset-2 transition-colors cursor-pointer disabled:opacity-50"
         >
-          Click to reveal directly
+          {t('unlock.unlockBtn')}
         </button>
       </div>
     </div>

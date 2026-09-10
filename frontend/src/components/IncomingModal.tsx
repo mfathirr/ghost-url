@@ -20,6 +20,7 @@ import {
 import type { IncomingTransfer, FileTransferProgress } from '../types/p2p';
 import { formatBytes } from './GhostDropZone';
 import { soundFx } from '../utils/soundEngine';
+import { useTranslation } from '../hooks/useTranslation';
 
 function getFileTypeIcon(type: string, name: string) {
   const lowerType = (type || '').toLowerCase();
@@ -62,6 +63,7 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
   onRejectFile,
   incomingProgress,
 }) => {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
   const [videoError, setVideoError] = useState(false);
@@ -180,10 +182,10 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                   {isCompleted
-                    ? 'Transfer Complete'
+                    ? t('incomingModal.transferComplete')
                     : isFileOffer
-                    ? 'Incoming GhostDrop'
-                    : 'Nearby Device Sharing'}
+                    ? t('incomingModal.incomingGhostDrop')
+                    : t('incomingModal.nearbySharing')}
                 </span>
                 <span
                   className={`inline-block w-2 h-2 rounded-full ${
@@ -196,12 +198,12 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
                   {transfer.senderName}
                 </span>{' '}
                 {isCompleted
-                  ? 'beamed you a file'
+                  ? t('incomingModal.beamedYouFile')
                   : isFileOffer
-                  ? 'wants to send a file'
+                  ? t('incomingModal.wantsToSendFile')
                   : isLink
-                  ? 'sent you a link'
-                  : 'sent text'}
+                  ? t('incomingModal.sentYouLink')
+                  : t('incomingModal.sentText')}
               </h3>
             </div>
           </div>
@@ -211,7 +213,7 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
             onClick={handleDecline}
             disabled={isTransferring}
             className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-40"
-            title="Dismiss"
+            title={t('common.dismiss')}
           >
             <X className="w-5 h-5" />
           </button>
@@ -233,7 +235,7 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
                     {formatBytes(transfer.completedDownload.fileSize)}
                   </span>
                   <span>•</span>
-                  <span className="truncate">{transfer.completedDownload.fileType || 'Ready to save'}</span>
+                  <span className="truncate">{transfer.completedDownload.fileType || t('incomingModal.readyToSave')}</span>
                 </div>
               </div>
             </div>
@@ -254,7 +256,7 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
                   <div className="p-3 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/60 space-y-1.5 text-xs text-emerald-800 dark:text-emerald-300">
                     <div className="flex items-center gap-2 font-medium">
                       <Check className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span>File ready in memory. Tap below to save to your device.</span>
+                      <span>{t('incomingModal.readyInMemory')}</span>
                     </div>
                   </div>
                 );
@@ -270,13 +272,13 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
                       </div>
                       <div className="space-y-1 relative z-10">
                         <div className="text-xs font-semibold text-slate-900 dark:text-white flex items-center justify-center gap-1.5">
-                          <span>Apple QuickTime Video</span>
+                          <span>{t('incomingModal.appleVideoTitle')}</span>
                           <span className="px-1.5 py-0.5 rounded text-[10px] bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300 font-mono">
                             {fileName.split('.').pop()?.toUpperCase() || 'MOV'}
                           </span>
                         </div>
                         <p className="text-[11px] text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
-                          iPhone camera recording (HEVC &amp; uncompressed audio). Saved to device for native Photos playback.
+                          {t('incomingModal.appleVideoDesc')}
                         </p>
                       </div>
                     </div>
@@ -298,10 +300,10 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 font-semibold text-slate-900 dark:text-white">
                         <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                        <span>File beamed completely (100% intact)</span>
+                        <span>{t('incomingModal.beamedIntact')}</span>
                       </div>
                       <span className="text-[10px] px-2 py-0.5 rounded-full font-mono font-medium bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">
-                        Ready
+                        {t('incomingModal.readyBadge')}
                       </span>
                     </div>
 
@@ -309,26 +311,20 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
                       <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 space-y-1.5">
                         <div className="flex items-center gap-1.5 font-semibold text-[11px]">
                           <Smartphone className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                          <span>How to play on iPhone:</span>
+                          <span>{t('incomingModal.howToPlayIos')}</span>
                         </div>
                         <ol className="list-decimal list-inside text-[11px] text-slate-700 dark:text-slate-300 space-y-1 leading-relaxed pl-0.5">
-                          <li>
-                            Tap <strong>&ldquo;Save File&rdquo;</strong> below to download to the Files app.
-                          </li>
-                          <li>
-                            In the <strong>Files</strong> app, open Downloads, tap <span className="font-mono text-emerald-600 dark:text-emerald-400">{fileName}</span>, and tap the <strong>Share</strong> icon (bottom-left).
-                          </li>
-                          <li>
-                            Tap <strong className="text-emerald-600 dark:text-emerald-400">&ldquo;Save Video&rdquo;</strong> to add it directly to your <strong>Photos Camera Roll</strong> where it plays natively with sound!
-                          </li>
+                          <li>{t('incomingModal.iosStep1')}</li>
+                          <li>{t('incomingModal.iosStep2', { fileName })}</li>
+                          <li>{t('incomingModal.iosStep3')}</li>
                         </ol>
                         <p className="text-[10px] text-slate-500 dark:text-slate-400 pt-0.5 border-t border-amber-500/20">
-                          (The Files app is a document viewer that displays &ldquo;QuickTime movie&rdquo;. Saving to Photos enables the native player.)
+                          {t('incomingModal.iosNote')}
                         </p>
                       </div>
                     ) : (
                       <p className="text-[11px] text-slate-600 dark:text-slate-400 pl-1">
-                        Tap <strong>&ldquo;Save File&rdquo;</strong> below to save to your device and play in your default video player (VLC, QuickTime, or Media Player).
+                        {t('incomingModal.desktopVideoHelp')}
                       </p>
                     )}
                   </div>
@@ -351,7 +347,7 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
                     {formatBytes(transfer.fileOffer.fileSize)}
                   </span>
                   <span>•</span>
-                  <span className="truncate">{transfer.fileOffer.fileType || 'Unknown type'}</span>
+                  <span className="truncate">{transfer.fileOffer.fileType || t('dropZone.binaryFile')}</span>
                 </div>
               </div>
             </div>
@@ -362,7 +358,7 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
                 <div className="flex items-center justify-between text-xs">
                   <span className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300 font-mono">
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    Streaming directly into browser memory...
+                    {t('incomingModal.streamingMemory')}
                   </span>
                   <span className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
                     {incomingProgress.percentage}%
@@ -401,12 +397,12 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
                 {saved ? (
                   <>
                     <Check className="w-4 h-4" />
-                    <span>Saved to Device</span>
+                    <span>{t('incomingModal.savedToDevice')}</span>
                   </>
                 ) : (
                   <>
                     <Download className="w-4 h-4" />
-                    <span>Save File</span>
+                    <span>{t('incomingModal.saveFile')}</span>
                   </>
                 )}
               </button>
@@ -415,7 +411,7 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
                 onClick={onDismiss}
                 className="py-2.5 px-4 rounded-lg text-xs font-mono font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
               >
-                {saved ? 'Close' : 'Dismiss'}
+                {saved ? t('common.close') : t('common.dismiss')}
               </button>
             </>
           ) : isFileOffer ? (
@@ -427,19 +423,19 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-mono font-bold text-xs uppercase tracking-wider bg-emerald-500 hover:bg-emerald-400 text-black shadow-sm transition-all duration-200 active:-translate-y-[1px]"
                 >
                   <Download className="w-4 h-4" />
-                  <span>Accept &amp; Download</span>
+                  <span>{t('incomingModal.acceptDownload')}</span>
                 </button>
                 <button
                   type="button"
                   onClick={handleDecline}
                   className="py-2.5 px-4 rounded-lg text-xs font-mono font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
                 >
-                  Decline
+                  {t('incomingModal.decline')}
                 </button>
               </>
             ) : (
               <div className="w-full text-center py-2 text-xs font-semibold text-emerald-500 font-mono">
-                Downloading directly into browser memory...
+                {t('incomingModal.downloadingMemory')}
               </div>
             )
           ) : (
@@ -451,7 +447,7 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-mono font-bold text-xs uppercase tracking-wider bg-emerald-500 hover:bg-emerald-400 text-black shadow-sm transition-all duration-200 active:-translate-y-[1px]"
                 >
                   <ArrowUpRight className="w-4 h-4" />
-                  <span>Accept &amp; Open</span>
+                  <span>{t('incomingModal.acceptOpen')}</span>
                 </button>
               )}
 
@@ -467,12 +463,12 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
                 {copied ? (
                   <>
                     <Check className="w-4 h-4 text-emerald-500" />
-                    <span>Copied</span>
+                    <span>{t('common.copied')}</span>
                   </>
                 ) : (
                   <>
                     <Copy className="w-4 h-4" />
-                    <span>Copy Content</span>
+                    <span>{t('incomingModal.copyContent')}</span>
                   </>
                 )}
               </button>
@@ -482,7 +478,7 @@ export const IncomingModal: React.FC<IncomingModalProps> = ({
                 onClick={handleDecline}
                 className="py-2.5 px-4 rounded-lg text-xs font-mono font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
               >
-                Decline
+                {t('incomingModal.decline')}
               </button>
             </>
           )}

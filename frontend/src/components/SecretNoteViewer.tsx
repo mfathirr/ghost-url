@@ -20,6 +20,7 @@ import 'prismjs/components/prism-go';
 import 'prismjs/components/prism-rust';
 import { copyToClipboard } from '../utils/clipboard';
 import { soundFx } from '../utils/soundEngine';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface SecretNoteViewerProps {
   content: string;
@@ -34,6 +35,7 @@ export const SecretNoteViewer: React.FC<SecretNoteViewerProps> = ({
   burned = false,
   expiresAt,
 }) => {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const [countdown, setCountdown] = useState<number>(30); // 30 second advisory countdown for burned notes
 
@@ -139,14 +141,16 @@ export const SecretNoteViewer: React.FC<SecretNoteViewerProps> = ({
             <div className="flex-1">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-rose-800 dark:text-rose-200">
-                  Self-Destruct Triggered: Secret Erased
+                  {t('secretNote.selfDestructTriggered')}
                 </h3>
                 <span className="text-[10px] font-mono font-bold bg-rose-100 dark:bg-rose-500/30 border border-rose-200 dark:border-rose-400/40 px-2 py-0.5 rounded text-rose-800 dark:text-rose-200">
-                  {countdown > 0 ? `${countdown}s view window` : 'Permanently Erased'}
+                  {countdown > 0
+                    ? t('secretNote.viewWindow', { count: countdown })
+                    : t('secretNote.permanentlyErased')}
                 </span>
               </div>
               <p className="mt-1 text-xs text-rose-700 dark:text-rose-200/90 leading-relaxed">
-                This was a single-use self-destructing secret note. It has been permanently purged from memory. Once you navigate away or close this tab, this secret cannot be viewed again.
+                {t('secretNote.burnedPurgedNotice')}
               </p>
             </div>
           </div>
@@ -164,14 +168,14 @@ export const SecretNoteViewer: React.FC<SecretNoteViewerProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                  Decrypted Secret Note
+                  {t('secretNote.decryptedTitle')}
                 </h2>
                 <span className="px-1.5 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-slate-300">
                   {detectedLang}
                 </span>
               </div>
               <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                {lines.length} line{lines.length !== 1 ? 's' : ''} • {content.length} characters
+                {t('secretNote.linesChars', { lines: lines.length, chars: content.length })}
               </p>
             </div>
           </div>
@@ -181,10 +185,10 @@ export const SecretNoteViewer: React.FC<SecretNoteViewerProps> = ({
               type="button"
               onClick={handleDownload}
               className="py-2 px-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 text-slate-700 dark:text-slate-200 text-xs font-mono font-semibold flex items-center gap-1.5 transition-colors"
-              title="Download content as text file"
+              title={t('secretNote.downloadTooltip')}
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Download</span>
+              <span>{t('secretNote.downloadTxt')}</span>
             </button>
 
             <button
@@ -199,12 +203,12 @@ export const SecretNoteViewer: React.FC<SecretNoteViewerProps> = ({
               {copied ? (
                 <>
                   <Check className="w-3.5 h-3.5" />
-                  <span>Copied</span>
+                  <span>{t('secretNote.copied')}</span>
                 </>
               ) : (
                 <>
                   <Copy className="w-3.5 h-3.5" />
-                  <span>Copy Content</span>
+                  <span>{t('secretNote.copyContent')}</span>
                 </>
               )}
             </button>
@@ -231,12 +235,16 @@ export const SecretNoteViewer: React.FC<SecretNoteViewerProps> = ({
         <div className="mt-5 pt-3.5 border-t border-slate-200/70 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] font-mono text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Decrypted on-device: Decryption key never left the URL fragment.</span>
+            <span>{t('secretNote.e2eeDecryptedNotice')}</span>
           </div>
           {expiresAt && !burned && (
             <div className="flex items-center gap-1 font-mono">
               <Clock className="w-3.5 h-3.5 text-amber-500" />
-              <span>Expires: {new Date(expiresAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              <span>
+                {t('secretNote.expiresAt', {
+                  time: new Date(expiresAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                })}
+              </span>
             </div>
           )}
         </div>

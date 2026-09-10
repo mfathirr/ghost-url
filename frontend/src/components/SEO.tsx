@@ -1,4 +1,6 @@
 import React, { useEffect } from 'react';
+import { useTranslation } from '../hooks/useTranslation';
+import { SUPPORTED_LOCALES } from '../types/i18n';
 
 export const DEFAULT_SITE_NAME = 'GhostURL';
 export const DEFAULT_TITLE = 'GhostURL | Self-Destructing Links, Encrypted Notes & P2P File Beaming';
@@ -30,12 +32,14 @@ export const SEO: React.FC<SEOProps> = ({
   noIndex = false,
   jsonLd,
 }) => {
+  const { locale } = useTranslation();
   const fullTitle = title ? `${title} | ${DEFAULT_SITE_NAME}` : DEFAULT_TITLE;
   const canonicalUrl = canonical || (noIndex ? '' : DEFAULT_CANONICAL);
 
   useEffect(() => {
-    // Synchronize document title
+    // Synchronize document title & html attributes
     document.title = fullTitle;
+    document.documentElement.lang = locale;
 
     // Helper to update or create meta tag
     const updateMeta = (nameOrProperty: 'name' | 'property', key: string, content: string) => {
@@ -49,11 +53,13 @@ export const SEO: React.FC<SEOProps> = ({
     };
 
     // Helper to update or create link tag
-    const updateLink = (rel: string, href: string) => {
-      let element = document.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement | null;
+    const updateLink = (rel: string, href: string, hreflang?: string) => {
+      const selector = hreflang ? `link[rel="${rel}"][hreflang="${hreflang}"]` : `link[rel="${rel}"]`;
+      let element = document.querySelector(selector) as HTMLLinkElement | null;
       if (!element) {
         element = document.createElement('link');
         element.rel = rel;
+        if (hreflang) element.hreflang = hreflang;
         document.head.appendChild(element);
       }
       element.href = href;
@@ -67,6 +73,16 @@ export const SEO: React.FC<SEOProps> = ({
     updateMeta('property', 'og:title', fullTitle);
     updateMeta('property', 'og:description', description);
     updateMeta('property', 'og:type', ogType);
+
+    const localeMap: Record<string, string> = {
+      en: 'en_US',
+      id: 'id_ID',
+      es: 'es_ES',
+      ja: 'ja_JP',
+      de: 'de_DE',
+    };
+    updateMeta('property', 'og:locale', localeMap[locale] || 'en_US');
+
     if (canonicalUrl) {
       updateMeta('property', 'og:url', canonicalUrl);
       updateLink('canonical', canonicalUrl);
@@ -75,7 +91,15 @@ export const SEO: React.FC<SEOProps> = ({
     updateMeta('name', 'twitter:title', fullTitle);
     updateMeta('name', 'twitter:description', description);
     updateMeta('name', 'twitter:image', ogImage);
-  }, [fullTitle, description, keywords, canonicalUrl, ogImage, ogType, noIndex]);
+
+    // Hreflang alternates for public indexable pages
+    if (!noIndex) {
+      Object.keys(SUPPORTED_LOCALES).forEach((code) => {
+        updateLink('alternate', `https://www.ghosturl.web.id/?lang=${code}`, code);
+      });
+      updateLink('alternate', 'https://www.ghosturl.web.id/', 'x-default');
+    }
+  }, [fullTitle, description, keywords, canonicalUrl, ogImage, ogType, noIndex, locale]);
 
   return (
     <>

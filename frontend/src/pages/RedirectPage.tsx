@@ -21,8 +21,10 @@ import { importKeyFromBase64, decrypt } from '../utils/crypto';
 import { SecretNoteViewer } from '../components/SecretNoteViewer';
 import { SlideToReveal } from '../components/SlideToReveal';
 import { soundFx } from '../utils/soundEngine';
+import { useTranslation } from '../hooks/useTranslation';
 
 export const RedirectPage: React.FC = () => {
+  const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
 
   const [loading, setLoading] = useState(true);
@@ -63,7 +65,7 @@ export const RedirectPage: React.FC = () => {
 
     if (rawPayload.startsWith('enc:')) {
       if (!fragmentKey) {
-        setCryptoError('This secret is end-to-end encrypted, but the unlock key is missing from the link. Make sure you copied the entire URL including the secret key at the end.');
+        setCryptoError(t('unlock.keyMissingDesc'));
         return;
       }
 
@@ -71,7 +73,7 @@ export const RedirectPage: React.FC = () => {
         const cryptoKey = await importKeyFromBase64(fragmentKey);
         finalPayload = await decrypt(cryptoKey, rawPayload);
       } catch {
-        setCryptoError('Could not unlock this secret. The key in your link might be incomplete or corrupted.');
+        setCryptoError(t('unlock.keyCorruptedDesc'));
         return;
       }
     }
@@ -155,7 +157,7 @@ export const RedirectPage: React.FC = () => {
     if (!slug) return;
 
     if (!passcode.trim()) {
-      setErrorMessage('Please enter the password to unlock this link');
+      setErrorMessage(t('unlock.enterPasscodePrompt'));
       return;
     }
 
@@ -176,7 +178,7 @@ export const RedirectPage: React.FC = () => {
       if (err instanceof Error) {
         setErrorMessage(err.message);
       } else {
-        setErrorMessage('Incorrect password. Please try again.');
+        setErrorMessage(t('unlock.incorrectPasscode'));
       }
     } finally {
       setUnlocking(false);
@@ -187,11 +189,11 @@ export const RedirectPage: React.FC = () => {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center">
         <SEO
-          title={redirecting ? 'Opening Link...' : 'Verifying Link'}
-          description="Verifying ephemeral link destination."
+          title={redirecting ? t('unlock.openingDestination') : t('unlock.verifyingLink')}
+          description={t('unlock.verifyingLink')}
           noIndex={true}
         />
-        <LoadingSpinner message={redirecting ? 'Access granted. Opening your destination...' : 'Verifying private link...'} />
+        <LoadingSpinner message={redirecting ? t('unlock.openingDestination') : t('unlock.verifyingLink')} />
       </div>
     );
   }
@@ -200,12 +202,12 @@ export const RedirectPage: React.FC = () => {
   if (cryptoError) {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center animate-fade-in">
-        <SEO title="Unlock Key Missing" description="Secret key missing from link." noIndex={true} />
+        <SEO title={t('unlock.keyMissingTitle')} description={t('unlock.keyMissingDesc')} noIndex={true} />
         <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 mb-5">
           <KeyRound className="w-7 h-7" />
         </div>
         <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">
-          Unlock Key Missing
+          {t('unlock.keyMissingTitle')}
         </h1>
         <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-mono">
           {cryptoError}
@@ -215,7 +217,7 @@ export const RedirectPage: React.FC = () => {
             to="/"
             className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg font-mono font-bold text-xs uppercase tracking-wider bg-emerald-500 hover:bg-emerald-400 text-black transition-all"
           >
-            <span>Return to Console</span>
+            <span>{t('unlock.returnToConsole')}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -228,25 +230,25 @@ export const RedirectPage: React.FC = () => {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center animate-fade-in">
         <SEO
-          title="Link Expired or Vanished"
-          description="This private link has expired or does not exist."
+          title={t('unlock.vanishedTitle')}
+          description={t('unlock.vanishedDesc')}
           noIndex={true}
         />
         <div className="w-16 h-16 mx-auto rounded-2xl bg-slate-100 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/80 flex items-center justify-center text-slate-400 mb-5 shadow-sm">
           <Ghost className="w-8 h-8 animate-pulse" />
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-          Link Vanished
+          {t('unlock.vanishedTitle')}
         </h1>
         <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-w-sm mx-auto">
-          This link has either reached its auto-eviction timer, self-destructed upon reading, or never existed. All records have been permanently cleared from memory.
+          {t('unlock.vanishedDesc')}
         </p>
         <div className="mt-6">
           <Link
             to="/"
             className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg font-mono font-bold text-xs uppercase tracking-wider bg-emerald-500 hover:bg-emerald-400 text-black transition-all"
           >
-            <span>Create New Link</span>
+            <span>{t('unlock.createNewLink')}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -273,7 +275,7 @@ export const RedirectPage: React.FC = () => {
   if (burned && destinationUrl) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 animate-fade-in text-center font-sans">
-        <SEO title="Link Destroyed" description="This link has self-destructed." noIndex={true} />
+        <SEO title={t('unlock.linkDestroyedForever')} description={t('unlock.burnOnReadExplained')} noIndex={true} />
         <div className="stealth-card rounded-2xl p-6 sm:p-8 border border-rose-300 dark:border-rose-500/40 text-slate-900 dark:text-white space-y-5 bg-rose-50/90 dark:bg-rose-950/70">
           <div className="w-14 h-14 mx-auto rounded-xl bg-rose-500/10 dark:bg-rose-500/20 border border-rose-500/30 dark:border-rose-500/40 flex items-center justify-center text-rose-500 dark:text-rose-400 shadow-sm">
             <Flame className="w-7 h-7" />
@@ -281,13 +283,13 @@ export const RedirectPage: React.FC = () => {
 
           <div>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-rose-500/10 dark:bg-rose-500/20 border border-rose-400/30 text-[10px] font-mono font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300 mb-2">
-              <span>Self-Destruct Triggered</span>
+              <span>{t('secretNote.selfDestructTriggered')}</span>
             </div>
             <h1 className="text-xl sm:text-2xl font-black tracking-tight text-rose-950 dark:text-white">
-              Link Destroyed Forever
+              {t('unlock.linkDestroyedForever')}
             </h1>
             <p className="mt-1.5 text-xs text-rose-900/80 dark:text-rose-200/80 leading-relaxed">
-              This link was configured to <span className="font-bold text-rose-950 dark:text-white">burn on read</span>. It has been permanently purged from memory and cannot be reloaded.
+              {t('unlock.burnOnReadExplained')}
             </p>
           </div>
 
@@ -297,7 +299,7 @@ export const RedirectPage: React.FC = () => {
               {burnCountdown}
             </div>
             <p className="text-[10px] text-rose-700/80 dark:text-rose-300/70 mt-1 uppercase font-mono tracking-wider">
-              Seconds until automated redirect
+              {t('unlock.secondsUntilRedirect')}
             </p>
           </div>
 
@@ -306,11 +308,11 @@ export const RedirectPage: React.FC = () => {
               href={destinationUrl}
               className="w-full py-2.5 px-4 rounded-lg font-mono font-bold text-xs uppercase tracking-wider bg-emerald-500 hover:bg-emerald-400 text-black transition-all flex items-center justify-center gap-2 active:-translate-y-[1px]"
             >
-              <span>Open Target Destination</span>
+              <span>{t('unlock.openTarget')}</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
             <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 truncate">
-              Target: <code className="text-slate-700 dark:text-slate-300">{destinationUrl}</code>
+              {t('common.target')}: <code className="text-slate-700 dark:text-slate-300">{destinationUrl}</code>
             </div>
           </div>
         </div>
@@ -335,13 +337,13 @@ export const RedirectPage: React.FC = () => {
           <div>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-[10px] font-mono font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400 mb-2">
               <Flame className="w-3 h-3 text-rose-500" />
-              <span>Burn-on-Read Secret</span>
+              <span>{t('linkForm.viewLimit1')}</span>
             </div>
             <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-              One-Time View Vault
+              {t('unlock.protectedTitle')}
             </h1>
             <p className="mt-1.5 text-xs text-slate-500 dark:text-zinc-400 leading-relaxed max-w-xs mx-auto font-mono">
-              This secret will be permanently incinerated from memory the moment it is revealed.
+              {t('unlock.protectedSubtitle')}
             </p>
           </div>
 
@@ -375,7 +377,7 @@ export const RedirectPage: React.FC = () => {
                   if (err instanceof Error) {
                     setErrorMessage(err.message);
                   } else {
-                    setErrorMessage('Failed to unlock secret.');
+                    setErrorMessage(t('errors.genericError'));
                   }
                 } finally {
                   setUnlocking(false);
@@ -392,8 +394,8 @@ export const RedirectPage: React.FC = () => {
   return (
     <div className="max-w-md mx-auto px-4 py-16 animate-fade-in">
       <SEO
-        title="Password Protected Link"
-        description="Enter password to unlock this private link."
+        title={t('unlock.protectedTitle')}
+        description={t('unlock.protectedSubtitle')}
         noIndex={true}
       />
       <div className="stealth-card rounded-2xl p-6 sm:p-8 border border-slate-200/90 dark:border-white/10">
@@ -403,10 +405,10 @@ export const RedirectPage: React.FC = () => {
             <Lock className="w-6 h-6" />
           </div>
           <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Passcode Protected
+            {t('unlock.protectedTitle')}
           </h1>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Enter the secret passcode to unlock this {fragmentType === 'note' ? 'secret note' : 'link'}.
+            {t('unlock.protectedSubtitle')}
           </p>
         </div>
 
@@ -414,7 +416,7 @@ export const RedirectPage: React.FC = () => {
         <div className="space-y-2 mb-5">
           <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-black/40 border border-slate-200/80 dark:border-zinc-800 flex items-center justify-center gap-2 text-[11px] text-slate-600 dark:text-slate-400 font-mono">
             <Clock className="w-3.5 h-3.5 text-amber-500" />
-            <span>Expires: {new Date(metadata.expires_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            <span>{t('status.expiresAt')}: {new Date(metadata.expires_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
           </div>
 
           {metadata.views_remaining !== null && (
@@ -426,8 +428,8 @@ export const RedirectPage: React.FC = () => {
               <Flame className="w-3.5 h-3.5 text-rose-500" />
               <span>
                 {metadata.views_remaining === 1
-                  ? 'Single-use link: Destroys upon unlocking'
-                  : `${metadata.views_remaining} view(s) remaining before destruction`}
+                  ? t('unlock.viewsRemaining1')
+                  : t('unlock.viewsRemaining', { count: metadata.views_remaining })}
               </span>
             </div>
           )}
@@ -443,7 +445,7 @@ export const RedirectPage: React.FC = () => {
         <form onSubmit={handleUnlock} className="space-y-4">
           <div>
             <label htmlFor="passcode-input" className="block text-xs font-mono uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 font-semibold">
-              Passcode
+              {t('unlock.passcodePrompt')}
             </label>
             <div className="relative">
               <input
@@ -453,15 +455,15 @@ export const RedirectPage: React.FC = () => {
                 required
                 value={passcode}
                 onChange={(e) => setPasscode(e.target.value)}
-                placeholder="Enter password..."
-                className="w-full pl-3.5 pr-10 py-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-black/60 text-slate-900 dark:text-white text-xs font-mono placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                placeholder={t('unlock.passcodePlaceholder')}
+                className="w-full px-3 py-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-black/50 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 text-xs font-mono"
               />
               <button
                 type="button"
                 onClick={() => setShowPasscode(!showPasscode)}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
-                {showPasscode ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                {showPasscode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
@@ -469,16 +471,16 @@ export const RedirectPage: React.FC = () => {
           <button
             type="submit"
             disabled={unlocking || !passcode.trim()}
-            className="w-full py-2.5 rounded-lg font-mono font-bold text-xs uppercase tracking-wider text-black bg-emerald-500 hover:bg-emerald-400 active:-translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all flex items-center justify-center gap-2"
+            className="w-full py-2.5 px-4 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-mono font-bold text-xs tracking-wider uppercase transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
           >
             {unlocking ? (
               <>
                 <div className="w-3.5 h-3.5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-                <span>Unlocking...</span>
+                <span>{t('unlock.unlocking')}</span>
               </>
             ) : (
               <>
-                <span>Unlock {fragmentType === 'note' ? 'Secret Note' : 'Link'}</span>
+                <span>{t('unlock.unlockBtn')}</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </>
             )}
@@ -488,7 +490,7 @@ export const RedirectPage: React.FC = () => {
         <div className="mt-5 pt-4 border-t border-slate-200/70 dark:border-zinc-800 text-center">
           <div className="flex items-center justify-center gap-1.5 text-[10px] font-mono text-slate-500 dark:text-slate-400">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Encrypted transmission: Ephemeral memory retention</span>
+            <span>{t('unlock.ephemeralRetentionNotice')}</span>
           </div>
         </div>
       </div>

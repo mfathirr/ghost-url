@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { SoundProvider } from './context/SoundContext';
+import { LocaleProvider } from './context/LocaleContext';
 import { P2PProvider, useP2PContext } from './context/P2PContext';
 import { IncomingModal } from './components/IncomingModal';
 import { Analytics } from '@vercel/analytics/react';
@@ -73,12 +74,14 @@ const AppContent: React.FC = () => {
 
 export const App: React.FC = () => {
   return (
-    <SoundProvider>
-      <P2PProvider>
-        <AppContent />
-        <Analytics />
-      </P2PProvider>
-    </SoundProvider>
+    <LocaleProvider>
+      <SoundProvider>
+        <P2PProvider>
+          <AppContent />
+          <Analytics />
+        </P2PProvider>
+      </SoundProvider>
+    </LocaleProvider>
   );
 };
 
